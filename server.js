@@ -21,12 +21,18 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+// const io = new Server(server, { cors: { origin: '*' } });
+const io = new Server(server, {
+  cors: {
+    origin: 'https://amanilinkhub.vercel.app',
+    methods: ['GET', 'POST']
+  }
+});
+
 
 app.set('io', io);
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join('uploads')));
