@@ -31,6 +31,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join('uploads')));
 
+app.use(cors({
+  origin: 'https://amanilinkhub.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type']
+}));
+
 // ✅ Route Middlewares
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
