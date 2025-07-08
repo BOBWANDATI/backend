@@ -29,8 +29,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Routes
-router.post('/submit', upload.array('files', 5), createReport);
+// ✅ Updated route to match frontend
+router.post('/api/report/submit', upload.array('files', 5), createReport);
+
+// Other routes
 router.get('/', getAllReports);
 router.get('/map', getMapData);
 
