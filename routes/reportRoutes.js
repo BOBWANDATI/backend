@@ -34,6 +34,7 @@ const upload = multer({ storage });
 router.post('/api/report/submit', upload.array('files', 5), createReport);
 
 
+
 // Other routes
 router.get('/', getAllReports);
 router.get('/map', getMapData);
