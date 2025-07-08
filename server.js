@@ -44,6 +44,14 @@ app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/ai/peacebot', peacebotRoutes);
 app.use('/api/admin', adminRoutes); // ✅ Admin-specific stats, incidents, etc.
 
+
+
+app.get('/', (req, res) => {
+  res.send('Backend is running 🚀');
+});
+
+
+
 // Socket.io Events
 io.on('connection', (socket) => {
   console.log('⚡ Client connected:', socket.id);
