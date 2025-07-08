@@ -11,21 +11,18 @@ import path from 'path';
 import authRoutes from './routes/authRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
-import reportRoutes from './routes/reportRoutes.js';
+import reportRoutes from './routes/report.js'; // ✅ Use correct file name
 import discussionRoutes from './routes/discussionRoutes.js';
 import mpesaRoutes from './routes/mpesaRoutes.js';
 import peacebotRoutes from './routes/peacebot.js';
-import adminRoutes from './routes/adminRoutes.js'; // ✅ Admin Dashboard routes (including incidents)
+import adminRoutes from './routes/adminRoutes.js';
 
-// Load env vars
 dotenv.config();
 
-// Express + HTTP + Socket Setup
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } }); // Allow all origins for now
+const io = new Server(server, { cors: { origin: '*' } });
 
-// Attach io to app so we can access it in controllers
 app.set('io', io);
 
 // Middleware
@@ -34,25 +31,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join('uploads')));
 
-// Route Middlewares
+// ✅ Route Middlewares
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/news', newsRoutes);
-app.use('/api/report', reportRoutes);
+app.use('/api/report', reportRoutes); // ✅ This is your backend's report route
 app.use('/api/discussions', discussionRoutes);
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/ai/peacebot', peacebotRoutes);
-app.use('/api/admin', adminRoutes); // ✅ Admin-specific stats, incidents, etc.
+app.use('/api/admin', adminRoutes);
 
-
-
+// ✅ Health check route
 app.get('/', (req, res) => {
-  res.send('Backend is running 🚀');
+  res.send('✅ Peace Building Backend is running!');
 });
 
-
-
-// Socket.io Events
+// ✅ Socket.io events
 io.on('connection', (socket) => {
   console.log('⚡ Client connected:', socket.id);
 
@@ -61,7 +55,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Database Connection & Start Server
+// ✅ Database + server boot
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
