@@ -1,33 +1,35 @@
-// routes/adminRoutes.js
-
 import express from 'express';
 const router = express.Router();
 
-// ✅ Import Models & Controllers
-import Incident from '../models/incident.js'; // ✅ Make sure the model file is named `incident.js`
+import Incident from '../models/incident.js';
 import {
   getAllReports,
   getMapData,
-  createReport,
   deleteIncident
 } from '../controllers/reportController.js';
 
 // ✅ GET: All incident reports
 router.get('/report', getAllReports);
 
-// ✅ GET: Map data (optional, include if used on admin side)
+// ✅ GET: Map data (optional, for admin map view)
 router.get('/report/map', getMapData);
 
-// ✅ GET: Dashboard stats (mocked for now)
-router.get('/stats', (req, res) => {
-  res.json({
-    reportsCount: 5,
-    newsCount: 10,
-    incidentsCount: 3,
-    dialoguesCount: 4,
-    messagesCount: 6,
-    storiesCount: 2,
-  });
+// ✅ GET: Dashboard Stats
+router.get('/stats', async (req, res) => {
+  try {
+    const total = await Incident.countDocuments();
+    const pending = await Incident.countDocuments({ status: 'pending' });
+    const resolved = await Incident.countDocuments({ status: 'resolved' });
+
+    res.json({
+      incidentsCount: total,
+      pendingIncidents: pending,
+      resolvedIncidents: resolved,
+    });
+  } catch (err) {
+    console.error('❌ Error fetching stats:', err);
+    res.status(500).json({ msg: '❌ Failed to load dashboard stats' });
+  }
 });
 
 // ✅ PATCH: Update Incident Status
@@ -35,6 +37,7 @@ router.patch('/report/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
     const validStatuses = ['pending', 'investigating', 'resolved', 'escalated'];
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ msg: '❌ Invalid status value' });
     }
@@ -65,7 +68,7 @@ router.patch('/report/:id/status', async (req, res) => {
   }
 });
 
-// ✅ DELETE: Delete incident
+// ✅ DELETE: Delete Incident
 router.delete('/report/:id', deleteIncident);
 
 export default router;
