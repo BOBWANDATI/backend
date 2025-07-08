@@ -11,7 +11,7 @@ import path from 'path';
 import authRoutes from './routes/authRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
-import reportRoutes from './routes/report.js'; // ✅ Use correct file name
+import reportRoutes from './routes/reportRoutes.js'; // ✅ FIXED HERE
 import discussionRoutes from './routes/discussionRoutes.js';
 import mpesaRoutes from './routes/mpesaRoutes.js';
 import peacebotRoutes from './routes/peacebot.js';
