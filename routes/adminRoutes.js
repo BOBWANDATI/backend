@@ -1,6 +1,4 @@
 import express from 'express';
-const router = express.Router();
-
 import Incident from '../models/incident.js';
 import {
   getAllReports,
@@ -8,11 +6,11 @@ import {
   deleteIncident
 } from '../controllers/reportController.js';
 
-// ✅ GET: All incident reports
-router.get('/report', getAllReports);
+const router = express.Router();
 
-// ✅ GET: Map data (optional, for admin map view)
-router.get('/report/map', getMapData);
+// 🚨 Optional: Add auth middleware for super/admins only
+// import { verifyAdmin } from '../middleware/authMiddleware.js';
+// router.use(verifyAdmin);
 
 // ✅ GET: Dashboard Stats
 router.get('/stats', async (req, res) => {
@@ -27,12 +25,18 @@ router.get('/stats', async (req, res) => {
       resolvedIncidents: resolved,
     });
   } catch (err) {
-    console.error('❌ Error fetching stats:', err);
+    console.error('❌ Error fetching stats:', err.message);
     res.status(500).json({ msg: '❌ Failed to load dashboard stats' });
   }
 });
 
-// ✅ PATCH: Update Incident Status
+// ✅ GET: All incident reports
+router.get('/report', getAllReports);
+
+// ✅ GET: Incident map data (for map view)
+router.get('/report/map', getMapData);
+
+// ✅ PATCH: Update incident status
 router.patch('/report/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
@@ -63,12 +67,12 @@ router.patch('/report/:id/status', async (req, res) => {
       incident: updatedIncident
     });
   } catch (err) {
-    console.error('❌ Error updating incident status:', err);
+    console.error('❌ Error updating incident status:', err.message);
     res.status(500).json({ msg: '❌ Server error' });
   }
 });
 
-// ✅ DELETE: Delete Incident
+// ✅ DELETE: Delete incident
 router.delete('/report/:id', deleteIncident);
 
 export default router;
