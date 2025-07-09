@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url';
 import {
   createReport,
   getAllReports,
-  getMapData
+  getMapData,
+  deleteIncident,
+  updateIncidentStatus // ✅ NEW: Import the status update controller
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -29,14 +31,19 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Updated route to match frontend
-// ✅ New (matches frontend path exactly)
+// ✅ Create new incident report with file uploads
 router.post('/submit', upload.array('files', 5), createReport);
 
-
-
-// Other routes
+// ✅ Get all incident reports
 router.get('/', getAllReports);
+
+// ✅ Get map data and statistics
 router.get('/map', getMapData);
+
+// ✅ Admin can delete incident
+router.delete('/:id', deleteIncident);
+
+// ✅ Admin can update incident status (e.g., to 'resolved')
+router.put('/incident/:id/status', updateIncidentStatus);
 
 export default router;
