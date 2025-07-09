@@ -5,11 +5,10 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import {
-  createReport,
   getAllReports,
   getMapData,
   deleteIncident,
-  updateIncidentStatus
+  updateIncidentStatus // ✅ NEW
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -48,6 +47,6 @@ router.get('/map', getMapData);
 router.delete('/:id', deleteIncident);
 
 // ✅ Update incident status by ID (for Admins)
-router.put('/:id/status', updateIncidentStatus);
+router.put('/report/:id/status', updateIncidentStatus);
 
 export default router;
