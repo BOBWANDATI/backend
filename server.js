@@ -1,93 +1,282 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import http from 'http';
-import { Server } from 'socket.io';
-import path from 'path';
+import { useState, useEffect } from 'react';
+import { FaComments, FaPlus, FaPaperPlane, FaRobot } from 'react-icons/fa';
+import '../components/styles/Dialogue.css';
 
-// Route imports
-import authRoutes from './routes/authRoutes.js';
-import contactRoutes from './routes/contactRoutes.js';
-import newsRoutes from './routes/newsRoutes.js';
-import reportRoutes from './routes/reportRoutes.js';
-import discussionRoutes from './routes/discussionRoutes.js';
-import mpesaRoutes from './routes/mpesaRoutes.js';
-import peacebotRoutes from './routes/peacebot.js';
-import adminRoutes from './routes/adminRoutes.js';
-
-dotenv.config();
-
-const app = express();
-const server = http.createServer(app);
-
-// ✅ Initialize Socket.IO with CORS for frontend
-const io = new Server(server, {
-  // cors: {
-  //   origin: 'https://amanilinkhub.vercel.app',
-  //   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  //   credentials: true
-  // }
-  cors: {
-  origin: '*',
-  methods: ['GET', 'POST'],
-}
-
-});
-
-// ✅ Attach io to app for global access (like in controllers)
-app.set('io', io);
-
-// ✅ Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join('uploads')));
-
-// ✅ CORS config
-app.use(cors({
-  origin: 'https://amanilinkhub.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// ✅ API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api/news', newsRoutes);
-app.use('/api/report', reportRoutes);
-app.use('/api/discussions', discussionRoutes);
-app.use('/api/mpesa', mpesaRoutes);
-app.use('/api/ai/peacebot', peacebotRoutes);
-app.use('/api/admin', adminRoutes);
-
-// ✅ Health check
-app.get('/', (req, res) => {
-  res.send('✅ Peace Building Backend is running!');
-});
-
-// ✅ Socket.io Events
-io.on('connection', (socket) => {
-  console.log('⚡ Client connected:', socket.id);
-
-  socket.on('disconnect', () => {
-    console.log('🚫 Client disconnected:', socket.id);
+const Dialogue = () => {
+  const [activeTopic, setActiveTopic] = useState(null);
+  const [message, setMessage] = useState('');
+  const [topics, setTopics] = useState([]);
+  const [messages, setMessages] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [newDiscussion, setNewDiscussion] = useState({
+    title: '',
+    location: '',
+    category: 'general'
   });
-});
 
-// ✅ MongoDB + Server start
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  dbName: 'peace_building'
-})
-.then(() => {
-  console.log('✅ MongoDB connected');
+  const fetchDiscussions = async () => {
+    try {
+      const res = await fetch('https://your-backend-url/api/discussions'); // ✅ Update to deployed backend URL
+      const data = await res.json();
 
-  const PORT = process.env.PORT || 5000;
-  server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-  });
-})
-.catch(err => {
-  console.error('❌ MongoDB connection failed:', err.message);
-});
+      const aiBot = {
+        id: 'ai-peacebot',
+        title: "Ask PeaceBot (AI)",
+        category: "ai",
+        location: "Virtual",
+        participants: 1
+      };
+
+      setTopics([...data, aiBot]);
+    } catch (error) {
+      console.error("Failed to fetch discussions:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDiscussions();
+  }, []);
+
+  const handleSendMessage = async (topicId) => {
+    if (!message.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      text: message,
+      sender: "You",
+      time: new Date().toLocaleTimeString()
+    };
+
+    setMessages(prev => ({
+      ...prev,
+      [topicId]: [...(prev[topicId] || []), userMessage]
+    }));
+
+    setMessage('');
+
+    if (topicId === 'ai-peacebot') {
+      setLoading(true);
+      try {
+        const response = await fetch('https://your-backend-url/api/ai/peacebot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: userMessage.text })
+        });
+
+        const data = await response.json();
+
+        const aiReply = {
+          id: Date.now() + 1,
+          text: data.text || '🤖 PeaceBot has no answer right now.',
+          sender: 'PeaceBot',
+          time: new Date().toLocaleTimeString()
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [topicId]: [...(prev[topicId] || []), aiReply]
+        }));
+      } catch {
+        const failMsg = {
+          id: Date.now() + 2,
+          text: '⚠️ AI service is currently unavailable.',
+          sender: 'PeaceBot',
+          time: new Date().toLocaleTimeString()
+        };
+        setMessages(prev => ({
+          ...prev,
+          [topicId]: [...(prev[topicId] || []), failMsg]
+        }));
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const selectTopic = (topic) => {
+    setActiveTopic(topic);
+    if (!messages[topic.id]) {
+      const welcomeText = topic.id === 'ai-peacebot'
+        ? "🤖 Welcome! I'm AmaniLinkBot. Ask any question about conflict resolution, peacebuilding, or mediation."
+        : "Welcome to the discussion about " + topic.title;
+
+      setMessages(prev => ({
+        ...prev,
+        [topic.id]: [
+          {
+            id: 1,
+            text: welcomeText,
+            sender: topic.id === 'ai-peacebot' ? "PeaceBot" : "Moderator",
+            time: new Date().toLocaleTimeString()
+          }
+        ]
+      }));
+    }
+  };
+
+  const handleCreateDiscussion = async () => {
+    const { title, location, category } = newDiscussion;
+    if (!title || !location) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    try {
+      const response = await fetch('https://your-backend-url/api/discussions/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          location,
+          category,
+          message: `New discussion started: ${title}`,
+          sender: "Moderator"
+        })
+      });
+
+      const data = await response.json();
+
+      const updatedTopics = [
+        ...topics.filter(t => t.id !== 'ai-peacebot'),
+        data,
+        topics.find(t => t.id === 'ai-peacebot')
+      ];
+
+      setTopics(updatedTopics);
+      setShowForm(false);
+      setNewDiscussion({ title: '', location: '', category: 'general' });
+      selectTopic(data);
+    } catch (error) {
+      console.error('Error creating discussion:', error);
+      alert('Failed to create discussion.');
+    }
+  };
+
+  return (
+    <div id="dialogue" className="page">
+      <div className="container">
+        <h2 className="page-title">Community Dialogue Platform</h2>
+        <p className="page-subtitle">Join discussions or ask PeaceBot to resolve conflict-related questions</p>
+
+        <div className="dialogue-container">
+          {/* Sidebar */}
+          <div className="dialogue-sidebar">
+            <div className="dialogue-card">
+              <div className="dialogue-card-header">
+                <h3><FaComments /> Active Discussions</h3>
+                <p>Tap any topic to join or ask PeaceBot directly</p>
+              </div>
+
+              <div className="dialogue-card-content">
+                <div className="topics-list">
+                  {topics.map(topic => (
+                    <div
+                      key={topic.id}
+                      className={`topic-item ${activeTopic?.id === topic.id ? 'active' : ''}`}
+                      onClick={() => selectTopic(topic)}
+                    >
+                      <h4>{topic.title}</h4>
+                      <p>{topic.location} • {topic.participants} participants</p>
+                    </div>
+                  ))}
+                </div>
+
+                {showForm ? (
+                  <div className="new-topic-form">
+                    <input
+                      type="text"
+                      placeholder="Discussion Title"
+                      value={newDiscussion.title}
+                      onChange={e => setNewDiscussion({ ...newDiscussion, title: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Location"
+                      value={newDiscussion.location}
+                      onChange={e => setNewDiscussion({ ...newDiscussion, location: e.target.value })}
+                    />
+                    <select
+                      value={newDiscussion.category}
+                      onChange={e => setNewDiscussion({ ...newDiscussion, category: e.target.value })}
+                    >
+                      <option value="general">General</option>
+                      <option value="land">Land</option>
+                      <option value="water">Water</option>
+                      <option value="youth">Youth</option>
+                      <option value="conflict">Conflict</option>
+                    </select>
+                    <button className="btn btn-primary" onClick={handleCreateDiscussion}>
+                      Start Discussion
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button className="btn btn-secondary dialogue-new-btn" onClick={() => setShowForm(true)}>
+                      <FaPlus /> Start New Discussion
+                    </button>
+                    <button
+                      className="btn btn-secondary dialogue-peacebot-btn"
+                      onClick={() => selectTopic(topics.find(t => t.id === 'ai-peacebot'))}
+                    >
+                      <FaRobot /> Ask PeaceBot
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Chat Area */}
+          <div className="dialogue-main">
+            {!activeTopic ? (
+              <div className="dialogue-empty">
+                <FaComments />
+                <h3>Select a Topic</h3>
+                <p>Choose a discussion or ask PeaceBot</p>
+              </div>
+            ) : (
+              <div className="dialogue-chat">
+                <div className="chat-header">
+                  <h3>{activeTopic.title}</h3>
+                  <p>{activeTopic.participants} participants • {activeTopic.id === 'ai-peacebot' ? 'AI PeaceBot Chat' : 'Community Discussion'}</p>
+                </div>
+
+                <div className="chat-messages">
+                  {messages[activeTopic.id]?.map(msg => (
+                    <div key={msg.id} className={`message ${msg.sender === 'PeaceBot' ? 'peacebot-message' : ''}`}>
+                      <strong>{msg.sender}:</strong> {msg.text}
+                      <span className="message-time">{msg.time}</span>
+                    </div>
+                  ))}
+                  {loading && activeTopic.id === 'ai-peacebot' && (
+                    <div className="message"><FaRobot /> PeaceBot is thinking...</div>
+                  )}
+                </div>
+
+                <div className="chat-input">
+                  <textarea
+                    placeholder={activeTopic.id === 'ai-peacebot' ? 'Ask your question to PeaceBot...' : 'Share your thoughts...'}
+                    value={message}
+                    maxLength="500"
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                  <span className="character-count">{message.length}/500</span>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleSendMessage(activeTopic.id)}
+                    disabled={loading}
+                  >
+                    <FaPaperPlane />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dialogue;
