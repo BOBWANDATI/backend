@@ -23,11 +23,16 @@ const server = http.createServer(app);
 
 // ✅ Initialize Socket.IO with CORS for frontend
 const io = new Server(server, {
+  // cors: {
+  //   origin: 'https://amanilinkhub.vercel.app',
+  //   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  //   credentials: true
+  // }
   cors: {
-    origin: 'https://amanilinkhub.vercel.app',
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    credentials: true
-  }
+  origin: '*',
+  methods: ['GET', 'POST'],
+}
+
 });
 
 // ✅ Attach io to app for global access (like in controllers)
