@@ -31,6 +31,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+/**
+ * ROUTES
+ */
+
 // ✅ Create a new incident report with file uploads
 router.post('/submit', upload.array('files', 5), createReport);
 
@@ -43,7 +47,7 @@ router.get('/map', getMapData);
 // ✅ Delete an incident by ID
 router.delete('/:id', deleteIncident);
 
-// ✅ Update incident status by ID (admin action)
+// ✅ Update incident status by ID (for Admins)
 router.put('/:id/status', updateIncidentStatus);
 
 export default router;
