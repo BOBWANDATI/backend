@@ -1,9 +1,7 @@
-// controllers/authController.js
-
 import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sendEmail from '../utils/sendEmail.js';
+import { mailTransporter } from '../server.js'; // ✅ Use existing transporter
 
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'http://localhost:5174';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
@@ -29,7 +27,6 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
-
     const newAdmin = new Admin({ username, email, password: hashedPassword, role, approved });
     await newAdmin.save();
 
@@ -49,7 +46,12 @@ export const register = async (req, res) => {
       `;
 
       for (const superAdmin of superAdmins) {
-        await sendEmail(superAdmin.email, '🛂 Admin Approval Request', emailHTML);
+        await mailTransporter.sendMail({
+          from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+          to: superAdmin.email,
+          subject: '🛂 Admin Approval Request',
+          html: emailHTML
+        });
       }
     }
 
@@ -87,7 +89,12 @@ export const approveAdmin = async (req, res) => {
       </a>
     `;
 
-    await sendEmail(admin.email, '✅ Admin Account Approved', approvedMsg);
+    await mailTransporter.sendMail({
+      from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+      to: admin.email,
+      subject: '✅ Admin Account Approved',
+      html: approvedMsg
+    });
 
     return res.send('<h2>✅ Admin approved and notified successfully.</h2>');
 
