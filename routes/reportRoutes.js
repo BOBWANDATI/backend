@@ -3,10 +3,13 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+
 import {
-  createReport,
+  createReport,           // ✅ Add this import
   getAllReports,
-  getMapData
+  getMapData,
+  deleteIncident,
+  updateIncidentStatus
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -24,14 +27,27 @@ if (!fs.existsSync(uploadDir)) {
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname}`)
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
 
-// Routes
+/**
+ * ROUTES
+ */
+
+// ✅ Create a new incident report with file uploads
 router.post('/submit', upload.array('files', 5), createReport);
+
+// ✅ Get all incident reports
 router.get('/', getAllReports);
+
+// ✅ Get map data and stats
 router.get('/map', getMapData);
+
+// ✅ Update incident status by ID (Admins)
+router.put('/:id/status', updateIncidentStatus); // ✅ Fixed path
+
+// ✅ Delete an incident by ID
+router.delete('/:id', deleteIncident);
 
 export default router;

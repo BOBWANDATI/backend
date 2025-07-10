@@ -13,7 +13,7 @@ export const createReport = async (req, res) => {
       followUp
     } = req.body;
 
-    // Validate coordinates (expecting: "lat,lng")
+    // Validate coordinates
     if (!location || !location.includes(',')) {
       return res.status(400).json({ msg: '❌ Invalid or missing coordinates (format: "lat,lng")' });
     }
@@ -43,7 +43,7 @@ export const createReport = async (req, res) => {
 
     const savedReport = await newReport.save();
 
-    // Real-time update via socket.io
+    // Emit new incident
     const io = req.app.get('io');
     if (io) {
       io.emit('new_incident_reported', {
@@ -51,18 +51,12 @@ export const createReport = async (req, res) => {
         type: savedReport.incidentType,
         status: savedReport.status,
         date: savedReport.date,
-        location: {
-          lat,
-          lng
-        }
+        location: { lat, lng }
       });
       console.log('📢 new_incident_reported emitted:', savedReport._id);
     }
 
-    res.status(201).json({
-      msg: '✅ Report submitted successfully',
-      data: savedReport
-    });
+    res.status(201).json({ msg: '✅ Report submitted successfully', data: savedReport });
 
   } catch (err) {
     console.error('❌ Error saving report:', err);
@@ -92,7 +86,7 @@ export const getMapData = async (req, res) => {
       status: i.status,
       date: i.date,
       location: {
-        lat: i.location.coordinates[1], // [lng, lat]
+        lat: i.location.coordinates[1],
         lng: i.location.coordinates[0]
       }
     }));
@@ -103,10 +97,8 @@ export const getMapData = async (req, res) => {
       total: incidents.length
     };
 
-    res.status(200).json({
-      incidents: formattedIncidents,
-      stats
-    });
+    res.status(200).json({ incidents: formattedIncidents, stats });
+
   } catch (err) {
     console.error('❌ Error loading map data:', err);
     res.status(500).json({ msg: 'Map loading failed', error: err.message });
@@ -130,8 +122,44 @@ export const deleteIncident = async (req, res) => {
     }
 
     res.status(200).json({ msg: '✅ Incident deleted successfully' });
+
   } catch (err) {
     console.error('❌ Delete error:', err);
     res.status(500).json({ msg: '❌ Server error during delete', error: err.message });
+  }
+};
+
+// ✅ Update Incident Status (Admin)
+export const updateIncidentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'resolved'].includes(status)) {
+      return res.status(400).json({ msg: '❌ Invalid status value.' });
+    }
+
+    const incident = await Incident.findById(id);
+    if (!incident) {
+      return res.status(404).json({ msg: '❌ Incident not found.' });
+    }
+
+    incident.status = status;
+    await incident.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('incident_status_updated', {
+        id: incident._id,
+        status: incident.status
+      });
+      console.log('🔄 incident_status_updated emitted:', incident._id);
+    }
+
+    res.status(200).json({ msg: '✅ Status updated successfully', incident });
+
+  } catch (err) {
+    console.error('❌ Error updating status:', err);
+    res.status(500).json({ msg: '❌ Server error updating status', error: err.message });
   }
 };
