@@ -1,13 +1,17 @@
-// server.js
+// ✅ Load environment variables first!
+import dotenv from 'dotenv';
+dotenv.config(); // ⬅️ MUST be at the top
+
+// ✅ Core Imports
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
+import nodemailer from 'nodemailer';
 
-// Route imports
+// ✅ Route Imports
 import authRoutes from './routes/authRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
@@ -15,26 +19,21 @@ import reportRoutes from './routes/reportRoutes.js';
 import discussionRoutes from './routes/discussionRoutes.js';
 import mpesaRoutes from './routes/mpesaRoutes.js';
 import peacebotRoutes from './routes/peacebot.js';
-import adminRoutes from './routes/adminRoutes.js'; // ✅ Admin Dashboard routes (including incidents)
+import adminRoutes from './routes/adminRoutes.js';
 
-// Load env vars
-dotenv.config();
-
-// Express + HTTP + Socket Setup
+// ✅ Setup Express + HTTP + Socket
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } }); // Allow all origins for now
-
-// Attach io to app so we can access it in controllers
+const io = new Server(server, { cors: { origin: '*' } });
 app.set('io', io);
 
-// Middleware
+// ✅ Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join('uploads')));
 
-// Route Middlewares
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/news', newsRoutes);
@@ -42,31 +41,50 @@ app.use('/api/report', reportRoutes);
 app.use('/api/discussions', discussionRoutes);
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/ai/peacebot', peacebotRoutes);
-app.use('/api/admin', adminRoutes); // ✅ Admin-specific stats, incidents, etc.
+app.use('/api/admin', adminRoutes);
 
-// Socket.io Events
+// ✅ Socket Events
 io.on('connection', (socket) => {
   console.log('⚡ Client connected:', socket.id);
-
   socket.on('disconnect', () => {
     console.log('🚫 Client disconnected:', socket.id);
   });
 });
 
-// Database Connection & Start Server
+// ✅ Email Transport Setup (Gmail)
+export const mailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_SENDER,      // ✅ From .env
+    pass: process.env.EMAIL_PASSWORD     // ✅ From .env
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+// ✅ Optional: Test email config
+mailTransporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Email Transport Error:', error);
+  } else {
+    console.log('📬 Email transporter is ready to send messages.');
+  }
+});
+
+// ✅ MongoDB Connection & Server Launch
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  dbName: 'peace_building'
+  dbName: 'peace_building',
 })
 .then(() => {
   console.log('✅ MongoDB connected');
-
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5051;
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
 })
-.catch(err => {
+.catch((err) => {
   console.error('❌ MongoDB connection failed:', err.message);
 });

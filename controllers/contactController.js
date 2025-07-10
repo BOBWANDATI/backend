@@ -1,17 +1,16 @@
 // controllers/contactController.js
-import nodemailer from 'nodemailer';
+import { mailTransporter } from '../server.js'; // ✅ Reuse transporter
 import Message from '../models/contact.js';
 
 export const sendContactEmail = async (req, res) => {
   const { name, email, phone, category, subject, message, newsletter } = req.body;
 
-  // 🚨 Validate required fields
   if (!name || !email || !category || !subject || !message) {
     return res.status(400).json({ msg: 'All required fields must be filled.' });
   }
 
   try {
-    // 💾 1. Save message to DB
+    // 1. Save to DB
     const newMessage = new Message({
       name,
       email,
@@ -24,7 +23,7 @@ export const sendContactEmail = async (req, res) => {
 
     const savedMessage = await newMessage.save();
 
-    // 📢 2. Emit new message to connected admins
+    // 2. Emit via socket
     const io = req.app.get('io');
     if (io) {
       io.emit('new_contact_message', {
@@ -41,18 +40,7 @@ export const sendContactEmail = async (req, res) => {
       console.log('📢 Emitted new_contact_message:', savedMessage._id);
     }
 
-    // 📧 3. Send confirmation email to admin inbox
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_SENDER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
+    // 3. Send email using shared transporter
     const mailOptions = {
       from: `"${name}" <${email}>`,
       to: process.env.EMAIL_RECEIVER,
@@ -71,13 +59,11 @@ export const sendContactEmail = async (req, res) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    // ✅ 4. Respond to client
+    await mailTransporter.sendMail(mailOptions);
     res.status(200).json({ msg: 'Message sent and saved successfully!' });
 
   } catch (err) {
-    console.error('❌ Error sending contact message:', err);
-    res.status(500).json({ msg: 'Failed to process the message.' });
+    console.error('❌ Email or DB Error:', err);
+    res.status(500).json({ msg: 'Failed to process and send message.' });
   }
 };
