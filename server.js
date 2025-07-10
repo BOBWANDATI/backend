@@ -25,7 +25,7 @@ import discussionRoutes from './routes/discussionRoutes.js';
 import mpesaRoutes from './routes/mpesaRoutes.js';
 import peacebotRoutes from './routes/peacebot.js';
 import adminRoutes from './routes/adminRoutes.js';
-import sendEmail from './utils/sendEmail.js'; // Adjust path if needed
+
 
 
 
