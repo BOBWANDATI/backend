@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js'; // ✅ Use existing transporter
 
-const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'http://localhost:5174';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
 
 // ✅ Register Admin or Super Admin
 export const register = async (req, res) => {
