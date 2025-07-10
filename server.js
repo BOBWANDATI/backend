@@ -25,15 +25,15 @@ import adminRoutes from './routes/adminRoutes.js';
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Define CORS options object
+// ✅ CORS Options
 const corsOptions = {
   origin: process.env.CLIENT_URL || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 };
 
-// ✅ Use CORS middleware with those options
 app.use(cors(corsOptions));
+
 
 
   // Vercel frontend URL or allow all
