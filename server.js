@@ -27,7 +27,7 @@ const server = http.createServer(app);
 
 // ✅ CORS Options (used for both Express and Socket.IO)
 const corsOptions = {
-  origin: process.env.CLIENT_URL || '*', // Vercel frontend URL or allow all
+  origin: process.env.CLIENT_BASE_URL || '*', // Vercel frontend URL or allow all
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 };
