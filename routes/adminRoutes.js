@@ -3,7 +3,8 @@ import Incident from '../models/incident.js';
 import {
   getAllReports,
   getMapData,
-  deleteIncident
+  deleteIncident,
+  updateIncidentStatus // ✅ Import the new controller
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -31,6 +32,9 @@ router.get('/report', getAllReports);
 
 // ✅ GET: Incident map data (for map view)
 router.get('/report/map', getMapData);
+
+// ✅ PATCH: Update incident status
+router.patch('/report/:id/status', updateIncidentStatus); // ✅ ADD THIS ROUTE
 
 // ✅ DELETE: Delete incident
 router.delete('/report/:id', deleteIncident);
