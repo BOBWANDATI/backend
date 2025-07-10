@@ -30,7 +30,7 @@ export const createReport = async (req, res) => {
       incidentType,
       location: {
         type: 'Point',
-        coordinates: [lng, lat] // Mongo expects [longitude, latitude]
+        coordinates: [lng, lat]
       },
       date: date || new Date(),
       description,
@@ -43,7 +43,6 @@ export const createReport = async (req, res) => {
 
     const savedReport = await newReport.save();
 
-    // Emit new incident
     const io = req.app.get('io');
     if (io) {
       io.emit('new_incident_reported', {
@@ -129,14 +128,15 @@ export const deleteIncident = async (req, res) => {
   }
 };
 
-// ✅ Update Incident Status (Admin)
+// ✅ Update Incident Status (PATCH)
 export const updateIncidentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'resolved'].includes(status)) {
-      return res.status(400).json({ msg: '❌ Invalid status value.' });
+    const validStatuses = ['pending', 'resolved', 'investigating', 'escalated'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ msg: `❌ Invalid status. Must be one of: ${validStatuses.join(', ')}` });
     }
 
     const incident = await Incident.findById(id);
@@ -149,11 +149,11 @@ export const updateIncidentStatus = async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('incident_status_updated', {
-        id: incident._id,
+      io.emit('incident_updated', {
+        _id: incident._id,
         status: incident.status
       });
-      console.log('🔄 incident_status_updated emitted:', incident._id);
+      console.log('🔄 incident_updated emitted:', incident._id);
     }
 
     res.status(200).json({ msg: '✅ Status updated successfully', incident });
