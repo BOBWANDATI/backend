@@ -1,7 +1,7 @@
 import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { mailTransporter } from '../server.js'; // ✅ Use existing transporter
+import { mailTransporter } from '../server.js';
 
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
@@ -30,7 +30,7 @@ export const register = async (req, res) => {
     const newAdmin = new Admin({ username, email, password: hashedPassword, role, approved });
     await newAdmin.save();
 
-    // ✉️ Send approval email if Admin
+    // ✉️ Send approval request email to Super Admins
     if (role === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
@@ -80,23 +80,34 @@ export const approveAdmin = async (req, res) => {
     admin.approved = true;
     await admin.save();
 
-    const loginLink = `${CLIENT_BASE_URL}/login`;
+    const loginLink = `${CLIENT_BASE_URL}/admin`; // or /login if that’s your path
+
     const approvedMsg = `
-      <h3>✅ Your Admin Account Has Been Approved!</h3>
-      <p>Hi ${admin.username},</p>
-      <a href="${loginLink}" style="padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
-        Log In Now
-      </a>
+      <div style="font-family:Arial,sans-serif;">
+        <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
+        <p>Hello <strong>${admin.username}</strong>,</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
+        <p>
+          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+            🔐 Log In Now
+          </a>
+        </p>
+        <p style="margin-top:20px;">Thank you for joining us.</p>
+      </div>
     `;
 
+    // ✅ Notify the approved admin directly
     await mailTransporter.sendMail({
       from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
       to: admin.email,
-      subject: '✅ Admin Account Approved',
+      subject: '✅ Your Admin Account is Approved',
       html: approvedMsg
     });
 
-    return res.send('<h2>✅ Admin approved and notified successfully.</h2>');
+    return res.send(`
+      <h2>✅ Admin approved and notified successfully.</h2>
+      <p><a href="${loginLink}">Go to Login</a></p>
+    `);
 
   } catch (err) {
     console.error('❌ Approval error:', err);
