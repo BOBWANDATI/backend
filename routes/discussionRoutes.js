@@ -4,7 +4,7 @@ import {
   getAllDiscussions,
   getDiscussionById,
   addMessage,
-  deleteDiscussion // ✅ Add this
+  deleteDiscussion // ✅ Good: This is correctly imported
 } from '../controllers/discussionController.js';
 
 const router = express.Router();
@@ -22,6 +22,6 @@ router.get('/:id', getDiscussionById);
 router.post('/:id/messages', addMessage);
 
 // ✅ 📌 Delete a discussion
-router.delete('/:id', deleteDiscussion);
+router.delete('/:id', deleteDiscussion); // ✅ This is the required line
 
 export default router;
