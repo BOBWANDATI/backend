@@ -86,7 +86,7 @@ export const approveAdmin = async (req, res) => {
       <div style="font-family:Arial,sans-serif;">
         <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
         <p>Hello <strong>${admin.username}</strong>,</p>
-        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved you can now login.</p>
         <p>
           <a href="https://amanilinkhub.vercel.app/admin" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
             🔐 Log In Now
