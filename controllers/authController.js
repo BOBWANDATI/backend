@@ -1,4 +1,4 @@
-import Admin from '../models/Admin.js';
+ import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
@@ -68,7 +68,6 @@ export const register = async (req, res) => {
 };
 
 // ✅ Approve Admin Account via Email Link
-// ✅ Approve Admin Account via Email Link
 export const approveAdmin = async (req, res) => {
   try {
     const { token } = req.params;
@@ -81,8 +80,7 @@ export const approveAdmin = async (req, res) => {
     admin.approved = true;
     await admin.save();
 
-    // 🔗 Hardcoded login link
-    const loginLink = 'https://amanilinkhub.vercel.app/';
+    const loginLink = 'https://amanilinkhub.vercel.app/admin';
 
     const approvedMsg = `
       <div style="font-family:Arial,sans-serif;">
@@ -90,7 +88,7 @@ export const approveAdmin = async (req, res) => {
         <p>Hello <strong>${admin.username}</strong>,</p>
         <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
         <p>
-          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+          <a href="https://amanilinkhub.vercel.app/admin" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
             🔐 Log In Now
           </a>
         </p>
@@ -105,7 +103,6 @@ export const approveAdmin = async (req, res) => {
       html: approvedMsg
     });
 
-    // ✅ Return confirmation HTML with correct login link
     return res.send(`
       <h2>✅ Admin approved and notified successfully.</h2>
       <p><a href="${loginLink}">Click here to log in</a></p>
@@ -116,6 +113,7 @@ export const approveAdmin = async (req, res) => {
     return res.status(400).send('<h3>❌ Invalid or expired approval token.</h3>');
   }
 };
+
 
 
 // ✅ Login Admin or Super Admin
