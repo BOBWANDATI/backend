@@ -124,3 +124,25 @@ export const getDiscussionById = async (req, res) => {
     res.status(500).json({ msg: 'Failed to fetch discussion.' });
   }
 };
+
+// ✅ Delete a discussion by ID
+export const deleteDiscussion = async (req, res) => {
+  try {
+    const discussion = await Discussion.findById(req.params.id);
+    if (!discussion) {
+      return res.status(404).json({ msg: 'Discussion not found' });
+    }
+
+    await discussion.deleteOne();
+
+    const io = req.app.get('io');
+    io.emit('discussion_deleted', { id: req.params.id });
+
+    console.log('🗑️ Discussion deleted:', discussion.title);
+    res.status(200).json({ msg: '✅ Discussion deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete Discussion Error:', error.message);
+    res.status(500).json({ msg: '❌ Failed to delete discussion' });
+  }
+};
+
