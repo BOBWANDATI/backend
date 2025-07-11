@@ -68,6 +68,7 @@ export const register = async (req, res) => {
 };
 
 // ✅ Approve Admin Account via Email Link
+// ✅ Approve Admin Account via Email Link
 export const approveAdmin = async (req, res) => {
   try {
     const { token } = req.params;
@@ -80,24 +81,23 @@ export const approveAdmin = async (req, res) => {
     admin.approved = true;
     await admin.save();
 
-    const loginLink = `${CLIENT_BASE_URL}/admin`; // or /login if that’s your path
+    // 🔗 Hardcoded login link
+    const loginLink = 'https://amanilinkhub.vercel.app/';
 
-   const approvedMsg = `
-  <div style="font-family:Arial,sans-serif;">
-    <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
-    <p>Hello <strong>${admin.username}</strong>,</p>
-    <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
-    <p>
-      <a href="https://amanilinkhub.vercel.app/admin" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
-        🔐 Log In Now
-      </a>
-    </p>
-    <p style="margin-top:20px;">Thank you for joining us.</p>
-  </div>
-`;
+    const approvedMsg = `
+      <div style="font-family:Arial,sans-serif;">
+        <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
+        <p>Hello <strong>${admin.username}</strong>,</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
+        <p>
+          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+            🔐 Log In Now
+          </a>
+        </p>
+        <p style="margin-top:20px;">Thank you for joining us.</p>
+      </div>
+    `;
 
-
-    // ✅ Notify the approved admin directly
     await mailTransporter.sendMail({
       from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
       to: admin.email,
@@ -105,9 +105,10 @@ export const approveAdmin = async (req, res) => {
       html: approvedMsg
     });
 
+    // ✅ Return confirmation HTML with correct login link
     return res.send(`
       <h2>✅ Admin approved and notified successfully.</h2>
-      <p><a href="${loginLink}">Go to Login</a></p>
+      <p><a href="${loginLink}">Click here to log in</a></p>
     `);
 
   } catch (err) {
@@ -115,6 +116,7 @@ export const approveAdmin = async (req, res) => {
     return res.status(400).send('<h3>❌ Invalid or expired approval token.</h3>');
   }
 };
+
 
 // ✅ Login Admin or Super Admin
 export const login = async (req, res) => {
