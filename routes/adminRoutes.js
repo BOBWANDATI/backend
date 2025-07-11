@@ -4,7 +4,7 @@ import {
   getAllReports,
   getMapData,
   deleteIncident,
-  updateIncidentStatus // ✅ Import the new controller
+  updateIncidentStatus
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -27,6 +27,71 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// ✅ GET: Analytics Data (Charts)
+router.get('/analytics', async (req, res) => {
+  try {
+    const incidents = await Incident.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          date: '$_id',
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    const statusCounts = await Incident.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          value: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          name: '$_id',
+          value: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    const locationCounts = await Incident.aggregate([
+      {
+        $group: {
+          _id: '$location',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          location: '$_id',
+          count: 1,
+          _id: 0
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    res.json({
+      line: incidents,
+      pie: statusCounts,
+      bar: locationCounts
+    });
+  } catch (err) {
+    console.error('❌ Error fetching analytics data:', err.message);
+    res.status(500).json({ msg: '❌ Failed to load analytics data' });
+  }
+});
+
 // ✅ GET: All incident reports
 router.get('/report', getAllReports);
 
@@ -34,7 +99,7 @@ router.get('/report', getAllReports);
 router.get('/report/map', getMapData);
 
 // ✅ PATCH: Update incident status
-router.patch('/report/:id/status', updateIncidentStatus); // ✅ ADD THIS ROUTE
+router.patch('/report/:id/status', updateIncidentStatus);
 
 // ✅ DELETE: Delete incident
 router.delete('/report/:id', deleteIncident);
