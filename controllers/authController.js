@@ -82,19 +82,20 @@ export const approveAdmin = async (req, res) => {
 
     const loginLink = `${CLIENT_BASE_URL}/admin`; // or /login if that’s your path
 
-    const approvedMsg = `
-      <div style="font-family:Arial,sans-serif;">
-        <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
-        <p>Hello <strong>${admin.username}</strong>,</p>
-        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
-        <p>
-          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
-            🔐 Log In Now
-          </a>
-        </p>
-        <p style="margin-top:20px;">Thank you for joining us.</p>
-      </div>
-    `;
+   const approvedMsg = `
+  <div style="font-family:Arial,sans-serif;">
+    <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
+    <p>Hello <strong>${admin.username}</strong>,</p>
+    <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved.</p>
+    <p>
+      <a href="https://amanilinkhub.vercel.app/admin" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+        🔐 Log In Now
+      </a>
+    </p>
+    <p style="margin-top:20px;">Thank you for joining us.</p>
+  </div>
+`;
+
 
     // ✅ Notify the approved admin directly
     await mailTransporter.sendMail({
