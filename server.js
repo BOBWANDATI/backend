@@ -36,7 +36,7 @@ const server = http.createServer(app);
 // ✅ CORS Options
 const corsOptions = {
   origin: process.env.CLIENT_URL || '*', // Use frontend URL (e.g. https://amanilinkhub.vercel.app)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH' ,'OPTIONS'],
   credentials: true
 };
 
