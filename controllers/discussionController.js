@@ -14,20 +14,18 @@ export const createDiscussion = async (req, res) => {
       location,
       category,
       participants: 1,
-      messages: [
-        {
-          text: message,
-          sender,
-          time: new Date().toISOString()
-        }
-      ]
+      messages: [{
+        text: message,
+        sender,
+        time: new Date().toISOString()
+      }]
     });
 
     const savedDiscussion = await newDiscussion.save();
 
     const io = req.app.get('io');
     io.emit('new_discussion_created', {
-      id: savedDiscussion._id,
+      _id: savedDiscussion._id,
       title: savedDiscussion.title,
       location: savedDiscussion.location,
       category: savedDiscussion.category,
@@ -37,7 +35,7 @@ export const createDiscussion = async (req, res) => {
 
     console.log('✅ Discussion created:', savedDiscussion.title);
     res.status(201).json({
-      id: savedDiscussion._id,
+      _id: savedDiscussion._id,
       title: savedDiscussion.title,
       location: savedDiscussion.location,
       category: savedDiscussion.category,
@@ -80,7 +78,7 @@ export const addMessage = async (req, res) => {
     });
 
     res.status(200).json({
-      id: updatedDiscussion._id,
+      _id: updatedDiscussion._id,
       participants: updatedDiscussion.participants,
       messages: updatedDiscussion.messages
     });
@@ -95,9 +93,8 @@ export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
 
-    // Map to frontend structure
     const response = discussions.map(d => ({
-      id: d._id,
+      _id: d._id,
       title: d.title,
       location: d.location,
       category: d.category,
@@ -136,7 +133,7 @@ export const deleteDiscussion = async (req, res) => {
     await discussion.deleteOne(); // or await Discussion.findByIdAndDelete(req.params.id);
 
     const io = req.app.get('io');
-    io.emit('discussion_deleted', { id: req.params.id });
+    io.emit('discussion_deleted', { _id: req.params.id });
 
     console.log('🗑️ Discussion deleted:', discussion.title);
     res.status(200).json({ msg: '✅ Discussion deleted successfully' });
@@ -145,5 +142,3 @@ export const deleteDiscussion = async (req, res) => {
     res.status(500).json({ msg: '❌ Failed to delete discussion' });
   }
 };
-
-
