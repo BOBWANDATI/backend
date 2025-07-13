@@ -6,6 +6,7 @@ export const createReport = async (req, res) => {
     const {
       incidentType,
       location,
+      locationName,
       date,
       description,
       urgency,
@@ -13,7 +14,7 @@ export const createReport = async (req, res) => {
       followUp
     } = req.body;
 
-    // Validate coordinates
+    // ✅ Validate coordinates
     if (!location || !location.includes(',')) {
       return res.status(400).json({ msg: '❌ Invalid or missing coordinates (format: "lat,lng")' });
     }
@@ -26,12 +27,14 @@ export const createReport = async (req, res) => {
       return res.status(400).json({ msg: '❌ Coordinates must be valid numbers.' });
     }
 
+    // ✅ Create new report
     const newReport = new Incident({
       incidentType,
       location: {
         type: 'Point',
         coordinates: [lng, lat]
       },
+      locationName, // ✅ Human-readable place name from input
       date: date || new Date(),
       description,
       urgency,
@@ -43,6 +46,7 @@ export const createReport = async (req, res) => {
 
     const savedReport = await newReport.save();
 
+    // ✅ Emit real-time update via Socket.IO
     const io = req.app.get('io');
     if (io) {
       io.emit('new_incident_reported', {
@@ -50,7 +54,11 @@ export const createReport = async (req, res) => {
         type: savedReport.incidentType,
         status: savedReport.status,
         date: savedReport.date,
-        location: { lat, lng }
+        location: {
+          lat,
+          lng
+        },
+        locationName // ✅ Include readable name in real-time event too
       });
       console.log('📢 new_incident_reported emitted:', savedReport._id);
     }
@@ -84,6 +92,7 @@ export const getMapData = async (req, res) => {
       type: i.incidentType,
       status: i.status,
       date: i.date,
+      locationName: i.locationName || 'Unknown',
       location: {
         lat: i.location.coordinates[1],
         lng: i.location.coordinates[0]
