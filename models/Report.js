@@ -32,8 +32,8 @@ const incidentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  reportedBy: {
-    type: String, // e.g., 'anonymous' or real username
+  reporter: { // ✅ FIXED: Match what controller uses
+    type: String, // e.g., 'anonymous' or 'user'
     default: 'anonymous',
   },
   followUp: {
