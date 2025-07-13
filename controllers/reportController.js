@@ -27,26 +27,24 @@ export const createReport = async (req, res) => {
       return res.status(400).json({ msg: '❌ Coordinates must be valid numbers.' });
     }
 
-    // ✅ Create new report
     const newReport = new Incident({
       incidentType,
       location: {
         type: 'Point',
         coordinates: [lng, lat],
       },
-      locationName: locationName || '', // 🟢 optional
+      locationName: locationName || '',
       date: date || new Date(),
       description,
       urgency,
       status: 'pending',
-      reporter: anonymous === 'true' || anonymous === true ? 'anonymous' : 'user', // ✅ now matches schema
+      reporter: anonymous === 'true' || anonymous === true ? 'anonymous' : 'user',
       followUp: followUp === 'true' || followUp === true,
       files: req.files?.map(file => `/uploads/${file.filename}`) || [],
     });
 
     const savedReport = await newReport.save();
 
-    // ✅ Emit real-time update via Socket.IO
     const io = req.app.get('io');
     if (io) {
       io.emit('new_incident_reported', {
@@ -71,11 +69,28 @@ export const createReport = async (req, res) => {
   }
 };
 
-// 📜 Get All Reports (Admin)
+// 📜 Get All Reports (Admin) — FIXED
 export const getAllReports = async (req, res) => {
   try {
     const reports = await Incident.find().sort({ createdAt: -1 });
-    res.status(200).json(reports);
+
+    const formattedReports = reports.map((i) => ({
+      _id: i._id,
+      incidentType: i.incidentType,
+      locationName: i.locationName || '',
+      coordinates: {
+        lat: i.location?.coordinates?.[1] || '',
+        lng: i.location?.coordinates?.[0] || '',
+      },
+      urgency: i.urgency,
+      description: i.description,
+      status: i.status,
+      date: i.date,
+      anonymous: i.reporter === 'anonymous',
+      reportedBy: i.reporter,
+    }));
+
+    res.status(200).json(formattedReports);
   } catch (err) {
     console.error('❌ Error fetching reports:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
