@@ -34,14 +34,14 @@ export const createReport = async (req, res) => {
         type: 'Point',
         coordinates: [lng, lat]
       },
-      locationName, // ✅ Human-readable place name from input
+      locationName: locationName || '', // ✅ Save location name
       date: date || new Date(),
       description,
       urgency,
       status: 'pending',
-      anonymous: anonymous === 'true' || anonymous === true,
+      reporter: anonymous === 'true' || anonymous === true ? 'Anonymous' : 'User',
       followUp: followUp === 'true' || followUp === true,
-      files: req.files?.map(file => `/uploads/${file.filename}`) || []
+      media: req.files?.map(file => `/uploads/${file.filename}`) || []
     });
 
     const savedReport = await newReport.save();
@@ -50,15 +50,15 @@ export const createReport = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('new_incident_reported', {
-        id: savedReport._id,
-        type: savedReport.incidentType,
+        _id: savedReport._id,
+        incidentType: savedReport.incidentType,
         status: savedReport.status,
         date: savedReport.date,
+        locationName: savedReport.locationName || 'Unknown',
         location: {
           lat,
           lng
-        },
-        locationName // ✅ Include readable name in real-time event too
+        }
       });
       console.log('📢 new_incident_reported emitted:', savedReport._id);
     }
@@ -75,7 +75,23 @@ export const createReport = async (req, res) => {
 export const getAllReports = async (req, res) => {
   try {
     const reports = await Incident.find().sort({ createdAt: -1 });
-    res.status(200).json(reports);
+    const formatted = reports.map(i => ({
+      _id: i._id,
+      incidentType: i.incidentType,
+      description: i.description,
+      urgency: i.urgency,
+      status: i.status,
+      date: i.date,
+      reporter: i.reporter,
+      followUp: i.followUp,
+      locationName: i.locationName || '',
+      coordinates: {
+        lat: i.location.coordinates[1],
+        lng: i.location.coordinates[0]
+      },
+      media: i.media
+    }));
+    res.status(200).json(formatted);
   } catch (err) {
     console.error('❌ Error fetching reports:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
