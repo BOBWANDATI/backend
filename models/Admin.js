@@ -1,5 +1,17 @@
 import mongoose from 'mongoose';
 
+const DEPARTMENT_ENUM = [
+  'Security',
+  'Health',
+  'Peace',
+  'Disaster',
+  'NGO',
+  'Police',
+  'Education',
+  'Community',
+  'Other'
+];
+
 const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -11,7 +23,7 @@ const adminSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    enum: ['Security', 'Health', 'Peace', 'Disaster', 'NGO', 'Other'], // ✅ Added 'NGO'
+    enum: DEPARTMENT_ENUM,
     default: 'Other'
   },
   approved: { type: Boolean, default: false },
