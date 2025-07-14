@@ -11,7 +11,7 @@ const adminSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    enum: ['Security', 'Health', 'Peace', 'Disaster', 'Other'], // You can expand this list
+    enum: ['Security', 'Health', 'Peace', 'Disaster', 'NGO', 'Other'], // ✅ Added 'NGO'
     default: 'Other'
   },
   approved: { type: Boolean, default: false },
