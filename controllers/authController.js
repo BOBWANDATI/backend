@@ -6,6 +6,12 @@ import { mailTransporter } from '../server.js';
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
 
+// ✅ Normalize department input
+const formatDepartment = (value) => {
+  if (!value) return 'Other';
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+};
+
 // ✅ Register Admin or Super Admin
 export const register = async (req, res) => {
   try {
@@ -16,7 +22,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
-    // ✅ Super Admin logic
+    // ✅ Handle Super Admin restriction
     let approved = false;
     if (role === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
@@ -27,18 +33,20 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    const formattedDepartment = role === 'admin' ? formatDepartment(department) : undefined;
+
     const newAdmin = new Admin({
       username,
       email,
       password: hashedPassword,
       role,
       approved,
-      department: role === 'admin' ? department : undefined // Only admins need department
+      department: formattedDepartment
     });
 
     await newAdmin.save();
 
-    // ✉️ Send approval request email to Super Admins
+    // ✅ Email Super Admins if it's a new admin
     if (role === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
@@ -89,7 +97,7 @@ export const approveAdmin = async (req, res) => {
     admin.approved = true;
     await admin.save();
 
-    const loginLink = 'https://amanilinkhub.vercel.app/admin';
+    const loginLink = `${CLIENT_BASE_URL}/admin`;
 
     const approvedMsg = `
       <div style="font-family:Arial,sans-serif;">
@@ -144,7 +152,7 @@ export const login = async (req, res) => {
         username: admin.username,
         email: admin.email,
         role: admin.role,
-        department: admin.department // include department
+        department: admin.department
       }
     });
 
