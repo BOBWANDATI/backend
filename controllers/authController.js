@@ -1,4 +1,4 @@
- import Admin from '../models/Admin.js';
+import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.co
 // ✅ Register Admin or Super Admin
 export const register = async (req, res) => {
   try {
-    const { username, password, email, role } = req.body;
+    const { username, password, email, role, department } = req.body;
 
     // 🛑 Check for duplicate username
     if (await Admin.findOne({ username })) {
@@ -27,7 +27,15 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
-    const newAdmin = new Admin({ username, email, password: hashedPassword, role, approved });
+    const newAdmin = new Admin({
+      username,
+      email,
+      password: hashedPassword,
+      role,
+      approved,
+      department: role === 'admin' ? department : undefined // Only admins need department
+    });
+
     await newAdmin.save();
 
     // ✉️ Send approval request email to Super Admins
@@ -40,6 +48,7 @@ export const register = async (req, res) => {
       const emailHTML = `
         <h3>🛂 New Admin Approval Needed</h3>
         <p>Username: <strong>${newAdmin.username}</strong></p>
+        <p>Department: <strong>${newAdmin.department}</strong></p>
         <a href="${approvalLink}" style="padding:10px 20px;background:#007BFF;color:white;text-decoration:none;border-radius:5px;">
           Approve Admin
         </a>
@@ -86,9 +95,9 @@ export const approveAdmin = async (req, res) => {
       <div style="font-family:Arial,sans-serif;">
         <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
         <p>Hello <strong>${admin.username}</strong>,</p>
-        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved you can now login.</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved. You can now login.</p>
         <p>
-          <a href="https://amanilinkhub.vercel.app/admin" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
             🔐 Log In Now
           </a>
         </p>
@@ -114,8 +123,6 @@ export const approveAdmin = async (req, res) => {
   }
 };
 
-
-
 // ✅ Login Admin or Super Admin
 export const login = async (req, res) => {
   try {
@@ -130,7 +137,16 @@ export const login = async (req, res) => {
 
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    return res.json({ token, admin });
+    return res.json({
+      token,
+      admin: {
+        _id: admin._id,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+        department: admin.department // include department
+      }
+    });
 
   } catch (err) {
     console.error('❌ Login error:', err);
