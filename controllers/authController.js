@@ -18,19 +18,17 @@ export const register = async (req, res) => {
     const { username, password, email, role, department } = req.body;
     const normalizedRole = role.toLowerCase();
 
-    // Check for duplicate username
     if (await Admin.findOne({ username })) {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
-    // Super admin restriction logic
     let approved = false;
     if (normalizedRole === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
       if (superCount >= 2) {
         return res.status(400).json({ msg: 'Only 2 Super Admins allowed.' });
       }
-      approved = true; // Super Admin auto-approved
+      approved = true; // Super admins are auto-approved
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
@@ -47,7 +45,6 @@ export const register = async (req, res) => {
 
     await newAdmin.save();
 
-    // Notify super admins for approval (if normal admin)
     if (normalizedRole === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
@@ -85,7 +82,7 @@ export const register = async (req, res) => {
   }
 };
 
-// ✅ Approve Admin Account via Email Link
+// ✅ Approve Admin via Email Link
 export const approveAdmin = async (req, res) => {
   try {
     const { token } = req.params;
@@ -139,13 +136,25 @@ export const login = async (req, res) => {
     const normalizedRole = role.toLowerCase();
 
     const admin = await Admin.findOne({ username, role: normalizedRole });
-    if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
-    if (!admin.approved) return res.status(403).json({ msg: '⏳ Account is pending approval.' });
+    if (!admin) {
+      console.log('🔍 Admin not found or role mismatch:', username, normalizedRole);
+      return res.status(400).json({ msg: 'Invalid credentials.' });
+    }
+
+    if (!admin.approved) {
+      console.log('⛔ Admin not approved yet:', admin.username);
+      return res.status(403).json({ msg: '⏳ Account is pending approval.' });
+    }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials.' });
+    if (!isMatch) {
+      console.log('❌ Invalid password for:', admin.username);
+      return res.status(400).json({ msg: 'Invalid credentials.' });
+    }
 
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    console.log('✅ Login success for:', admin.username);
 
     return res.json({
       token,
@@ -154,7 +163,8 @@ export const login = async (req, res) => {
         username: admin.username,
         email: admin.email,
         role: admin.role,
-        department: admin.department
+        department: admin.department,
+        approved: admin.approved
       }
     });
 
