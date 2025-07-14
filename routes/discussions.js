@@ -1,17 +1,27 @@
-// routes/discussions.js
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   createDiscussion,
-  addMessage,
   getAllDiscussions,
-  getDiscussionById
-} = require('../controllers/discussionController');
+  getDiscussionById,
+  addMessage,
+  deleteDiscussion
+} from '../controllers/discussionController.js';
 
-// Routes
+const router = express.Router();
+
+// ✅ Create a new discussion
 router.post('/create', createDiscussion);
-router.post('/:id/message', addMessage);
+
+// ✅ Add a message to a discussion
+router.post('/:id/messages', addMessage);
+
+// ✅ Get all discussions
 router.get('/', getAllDiscussions);
+
+// ✅ Get a specific discussion by ID
 router.get('/:id', getDiscussionById);
 
-module.exports = router;
+// ✅ Delete a discussion
+router.delete('/:id', deleteDiscussion);
+
+export default router;

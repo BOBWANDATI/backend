@@ -1,40 +1,51 @@
-// controllers/authController.js
-
 import Admin from '../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sendEmail from '../utils/sendEmail.js';
+import { mailTransporter } from '../server.js';
 
-const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'http://localhost:5174';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
+
+// Normalize department input
+const formatDepartment = (value) => {
+  if (!value) return 'Other';
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+};
 
 // ✅ Register Admin or Super Admin
 export const register = async (req, res) => {
   try {
-    const { username, password, email, role } = req.body;
+    const { username, password, email, role, department } = req.body;
+    const normalizedRole = role.toLowerCase();
 
-    // 🛑 Check for duplicate username
     if (await Admin.findOne({ username })) {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
-    // ✅ Super Admin logic
     let approved = false;
-    if (role === 'super') {
+    if (normalizedRole === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
       if (superCount >= 2) {
         return res.status(400).json({ msg: 'Only 2 Super Admins allowed.' });
       }
-      approved = true;
+      approved = true; // Super admins are auto-approved
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    const formattedDepartment = normalizedRole === 'admin' ? formatDepartment(department) : undefined;
 
-    const newAdmin = new Admin({ username, email, password: hashedPassword, role, approved });
+    const newAdmin = new Admin({
+      username,
+      email,
+      password: hashedPassword,
+      role: normalizedRole,
+      approved,
+      department: formattedDepartment
+    });
+
     await newAdmin.save();
 
-    // ✉️ Send approval email if Admin
-    if (role === 'admin') {
+    if (normalizedRole === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
 
@@ -43,13 +54,19 @@ export const register = async (req, res) => {
       const emailHTML = `
         <h3>🛂 New Admin Approval Needed</h3>
         <p>Username: <strong>${newAdmin.username}</strong></p>
+        <p>Department: <strong>${newAdmin.department}</strong></p>
         <a href="${approvalLink}" style="padding:10px 20px;background:#007BFF;color:white;text-decoration:none;border-radius:5px;">
           Approve Admin
         </a>
       `;
 
       for (const superAdmin of superAdmins) {
-        await sendEmail(superAdmin.email, '🛂 Admin Approval Request', emailHTML);
+        await mailTransporter.sendMail({
+          from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+          to: superAdmin.email,
+          subject: '🛂 Admin Approval Request',
+          html: emailHTML
+        });
       }
     }
 
@@ -65,7 +82,7 @@ export const register = async (req, res) => {
   }
 };
 
-// ✅ Approve Admin Account via Email Link
+// ✅ Approve Admin via Email Link
 export const approveAdmin = async (req, res) => {
   try {
     const { token } = req.params;
@@ -78,18 +95,33 @@ export const approveAdmin = async (req, res) => {
     admin.approved = true;
     await admin.save();
 
-    const loginLink = `${CLIENT_BASE_URL}/login`;
+    const loginLink = `${CLIENT_BASE_URL}/admin`;
+
     const approvedMsg = `
-      <h3>✅ Your Admin Account Has Been Approved!</h3>
-      <p>Hi ${admin.username},</p>
-      <a href="${loginLink}" style="padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
-        Log In Now
-      </a>
+      <div style="font-family:Arial,sans-serif;">
+        <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
+        <p>Hello <strong>${admin.username}</strong>,</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved. You can now log in.</p>
+        <p>
+          <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
+            🔐 Log In Now
+          </a>
+        </p>
+        <p style="margin-top:20px;">Thank you for joining us.</p>
+      </div>
     `;
 
-    await sendEmail(admin.email, '✅ Admin Account Approved', approvedMsg);
+    await mailTransporter.sendMail({
+      from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+      to: admin.email,
+      subject: '✅ Your Admin Account is Approved',
+      html: approvedMsg
+    });
 
-    return res.send('<h2>✅ Admin approved and notified successfully.</h2>');
+    return res.send(`
+      <h2>✅ Admin approved and notified successfully.</h2>
+      <p><a href="${loginLink}">Click here to log in</a></p>
+    `);
 
   } catch (err) {
     console.error('❌ Approval error:', err);
@@ -101,17 +133,40 @@ export const approveAdmin = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password, role } = req.body;
+    const normalizedRole = role.toLowerCase();
 
-    const admin = await Admin.findOne({ username, role });
-    if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
-    if (!admin.approved) return res.status(403).json({ msg: '⏳ Account is pending approval.' });
+    const admin = await Admin.findOne({ username, role: normalizedRole });
+    if (!admin) {
+      console.log('🔍 Admin not found or role mismatch:', username, normalizedRole);
+      return res.status(400).json({ msg: 'Invalid credentials.' });
+    }
+
+    if (!admin.approved) {
+      console.log('⛔ Admin not approved yet:', admin.username);
+      return res.status(403).json({ msg: '⏳ Account is pending approval.' });
+    }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials.' });
+    if (!isMatch) {
+      console.log('❌ Invalid password for:', admin.username);
+      return res.status(400).json({ msg: 'Invalid credentials.' });
+    }
 
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    return res.json({ token, admin });
+    console.log('✅ Login success for:', admin.username);
+
+    return res.json({
+      token,
+      admin: {
+        _id: admin._id,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+        department: admin.department,
+        approved: admin.approved
+      }
+    });
 
   } catch (err) {
     console.error('❌ Login error:', err);

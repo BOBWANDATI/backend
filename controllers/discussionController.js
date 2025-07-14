@@ -14,20 +14,18 @@ export const createDiscussion = async (req, res) => {
       location,
       category,
       participants: 1,
-      messages: [
-        {
-          text: message,
-          sender,
-          time: new Date().toISOString()
-        }
-      ]
+      messages: [{
+        text: message,
+        sender,
+        time: new Date().toISOString()
+      }]
     });
 
     const savedDiscussion = await newDiscussion.save();
 
     const io = req.app.get('io');
     io.emit('new_discussion_created', {
-      id: savedDiscussion._id,
+      _id: savedDiscussion._id,
       title: savedDiscussion.title,
       location: savedDiscussion.location,
       category: savedDiscussion.category,
@@ -37,7 +35,7 @@ export const createDiscussion = async (req, res) => {
 
     console.log('✅ Discussion created:', savedDiscussion.title);
     res.status(201).json({
-      id: savedDiscussion._id,
+      _id: savedDiscussion._id,
       title: savedDiscussion.title,
       location: savedDiscussion.location,
       category: savedDiscussion.category,
@@ -80,7 +78,7 @@ export const addMessage = async (req, res) => {
     });
 
     res.status(200).json({
-      id: updatedDiscussion._id,
+      _id: updatedDiscussion._id,
       participants: updatedDiscussion.participants,
       messages: updatedDiscussion.messages
     });
@@ -95,9 +93,8 @@ export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
 
-    // Map to frontend structure
     const response = discussions.map(d => ({
-      id: d._id,
+      _id: d._id,
       title: d.title,
       location: d.location,
       category: d.category,
@@ -122,5 +119,26 @@ export const getDiscussionById = async (req, res) => {
   } catch (error) {
     console.error('❌ Get Discussion Error:', error.message);
     res.status(500).json({ msg: 'Failed to fetch discussion.' });
+  }
+};
+
+// ✅ Delete a discussion by ID
+export const deleteDiscussion = async (req, res) => {
+  try {
+    const discussion = await Discussion.findById(req.params.id);
+    if (!discussion) {
+      return res.status(404).json({ msg: 'Discussion not found' });
+    }
+
+    await discussion.deleteOne(); // or use findByIdAndDelete
+
+    const io = req.app.get('io');
+    io.emit('discussion_deleted', { _id: req.params.id });
+
+    console.log('🗑️ Discussion deleted:', discussion.title);
+    res.status(200).json({ msg: '✅ Discussion deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete Discussion Error:', error.message);
+    res.status(500).json({ msg: '❌ Failed to delete discussion' });
   }
 };

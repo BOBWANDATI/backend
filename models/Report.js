@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 
 const incidentSchema = new mongoose.Schema({
-  type: { type: String, required: true }, // e.g., "theft", "fight", etc.
+  incidentType: {
+    type: String,
+    required: true, // e.g., "theft", "fight", etc.
+  },
   location: {
     type: {
       type: String,
@@ -12,6 +15,10 @@ const incidentSchema = new mongoose.Schema({
       type: [Number], // [longitude, latitude]
       required: true,
     },
+  },
+  locationName: {
+    type: String,
+    required: false, // optional readable name like "Garissa Market"
   },
   date: {
     type: Date,
@@ -25,8 +32,8 @@ const incidentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  reporter: {
-    type: String, // 'anonymous' or 'user'
+  reporter: { // ✅ FIXED: Match what controller uses
+    type: String, // e.g., 'anonymous' or 'user'
     default: 'anonymous',
   },
   followUp: {
@@ -38,8 +45,8 @@ const incidentSchema = new mongoose.Schema({
     enum: ['pending', 'investigating', 'resolved', 'escalated'],
     default: 'pending',
   },
-  media: {
-    type: [String], // Uploaded file paths
+  files: {
+    type: [String], // Uploaded file paths like /uploads/image.jpg
     default: [],
   },
   createdAt: {

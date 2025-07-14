@@ -3,21 +3,25 @@ import {
   createDiscussion,
   getAllDiscussions,
   getDiscussionById,
-  addMessage
+  addMessage,
+  deleteDiscussion
 } from '../controllers/discussionController.js';
 
 const router = express.Router();
 
-// 📌 Create a new discussion (Frontend expects /create)
+// ✅ Create a new discussion
 router.post('/create', createDiscussion);
 
-// 📌 Get all discussions
+// ✅ Get all discussions
 router.get('/', getAllDiscussions);
 
-// 📌 Get a single discussion by ID
+// ✅ Get a single discussion by ID
 router.get('/:id', getDiscussionById);
 
-// 📌 Add a message to a discussion
+// ✅ Add a message to a discussion
 router.post('/:id/messages', addMessage);
+
+// ✅ Delete a discussion by ID
+router.delete('/:id', deleteDiscussion);
 
 export default router;

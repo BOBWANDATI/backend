@@ -9,7 +9,12 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+
+// ✅ Get __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ✅ Route Imports
 import authRoutes from './routes/authRoutes.js';
@@ -23,26 +28,29 @@ import adminRoutes from './routes/adminRoutes.js';
 import storyRoutes from './routes/storyRoutes.js';
 
 
+
+
+
 // ✅ Setup Express App + HTTP Server
 const app = express();
 const server = http.createServer(app);
 
-// ✅ CORS Options (used for both Express and Socket.IO)
+// ✅ CORS Options
 const corsOptions = {
-  origin: process.env.CLIENT_URL || '*', // Vercel frontend URL or allow all
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: process.env.CLIENT_URL || '*', // Use frontend URL (e.g. https://amanilinkhub.vercel.app)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH' ,'OPTIONS'],
   credentials: true
 };
-
-// ✅ Setup Socket.IO with shared CORS
-const io = new Server(server, { cors: corsOptions });
-app.set('io', io);
 
 // ✅ Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join('uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ✅ Setup Socket.IO with CORS
+const io = new Server(server, { cors: corsOptions });
+app.set('io', io);
 
 // ✅ Routes
 app.use('/api/auth', authRoutes);
@@ -64,7 +72,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Email Transport Setup (Gmail)
+// ✅ Email Transport (Gmail)
 export const mailTransporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -76,7 +84,7 @@ export const mailTransporter = nodemailer.createTransport({
   }
 });
 
-// ✅ Optional: Test email config
+// ✅ Test email config
 mailTransporter.verify((error, success) => {
   if (error) {
     console.error('❌ Email Transport Error:', error);
@@ -85,20 +93,19 @@ mailTransporter.verify((error, success) => {
   }
 });
 
-// ✅ MongoDB Connection & Server Launch
+// ✅ Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  dbName: 'peace_building',
+  dbName: 'peace_building'
 })
 .then(() => {
   console.log('✅ MongoDB connected');
   const PORT = process.env.PORT || 5000;
   server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-
+    console.log(`🚀 Server running on port ${PORT}`);
   });
 })
 .catch((err) => {
   console.error('❌ MongoDB connection failed:', err.message);
-}); 
+});
