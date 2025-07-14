@@ -6,7 +6,7 @@ import { mailTransporter } from '../server.js';
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
 
-// ✅ Normalize department input
+// Normalize department input
 const formatDepartment = (value) => {
   if (!value) return 'Other';
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
@@ -16,38 +16,39 @@ const formatDepartment = (value) => {
 export const register = async (req, res) => {
   try {
     const { username, password, email, role, department } = req.body;
+    const normalizedRole = role.toLowerCase();
 
-    // 🛑 Check for duplicate username
+    // Check for duplicate username
     if (await Admin.findOne({ username })) {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
-    // ✅ Handle Super Admin restriction
+    // Super admin restriction logic
     let approved = false;
-    if (role === 'super') {
+    if (normalizedRole === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
       if (superCount >= 2) {
         return res.status(400).json({ msg: 'Only 2 Super Admins allowed.' });
       }
-      approved = true;
+      approved = true; // Super Admin auto-approved
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
-    const formattedDepartment = role === 'admin' ? formatDepartment(department) : undefined;
+    const formattedDepartment = normalizedRole === 'admin' ? formatDepartment(department) : undefined;
 
     const newAdmin = new Admin({
       username,
       email,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
       approved,
       department: formattedDepartment
     });
 
     await newAdmin.save();
 
-    // ✅ Email Super Admins if it's a new admin
-    if (role === 'admin') {
+    // Notify super admins for approval (if normal admin)
+    if (normalizedRole === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
 
@@ -103,7 +104,7 @@ export const approveAdmin = async (req, res) => {
       <div style="font-family:Arial,sans-serif;">
         <h2 style="color:#4CAF50;">✅ Your Admin Account Has Been Approved!</h2>
         <p>Hello <strong>${admin.username}</strong>,</p>
-        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved. You can now login.</p>
+        <p>Your account on <strong>AmaniLink Hub</strong> has been successfully approved. You can now log in.</p>
         <p>
           <a href="${loginLink}" style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007BFF;color:#fff;text-decoration:none;border-radius:5px;">
             🔐 Log In Now
@@ -135,8 +136,9 @@ export const approveAdmin = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password, role } = req.body;
+    const normalizedRole = role.toLowerCase();
 
-    const admin = await Admin.findOne({ username, role });
+    const admin = await Admin.findOne({ username, role: normalizedRole });
     if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
     if (!admin.approved) return res.status(403).json({ msg: '⏳ Account is pending approval.' });
 
