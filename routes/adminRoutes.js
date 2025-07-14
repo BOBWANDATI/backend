@@ -19,7 +19,7 @@ router.get('/stats', async (req, res) => {
     res.json({
       incidentsCount: total,
       pendingIncidents: pending,
-      resolvedIncidents: resolved,
+      resolvedIncidents: resolved
     });
   } catch (err) {
     console.error('❌ Error fetching stats:', err.message);
@@ -27,7 +27,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// ✅ GET: Analytics Data (Charts)
+// ✅ GET: Analytics Data (Line, Pie, Bar Charts)
 router.get('/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -92,16 +92,16 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
-// ✅ GET: All incident reports
+// ✅ GET: All Incident Reports
 router.get('/report', getAllReports);
 
-// ✅ GET: Incident map data (for map view)
+// ✅ GET: Map Data
 router.get('/report/map', getMapData);
 
-// ✅ PATCH: Update incident status
+// ✅ PATCH: Update Incident Status
 router.patch('/report/:id/status', updateIncidentStatus);
 
-// ✅ DELETE: Delete incident
+// ✅ DELETE: Delete Incident
 router.delete('/report/:id', deleteIncident);
 
 export default router;
