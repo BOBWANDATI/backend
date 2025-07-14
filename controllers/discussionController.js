@@ -130,7 +130,7 @@ export const deleteDiscussion = async (req, res) => {
       return res.status(404).json({ msg: 'Discussion not found' });
     }
 
-    await discussion.deleteOne(); // or await Discussion.findByIdAndDelete(req.params.id);
+    await discussion.deleteOne(); // or use findByIdAndDelete
 
     const io = req.app.get('io');
     io.emit('discussion_deleted', { _id: req.params.id });
