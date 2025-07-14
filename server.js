@@ -20,6 +20,8 @@ import discussionRoutes from './routes/discussionRoutes.js';
 import mpesaRoutes from './routes/mpesaRoutes.js';
 import peacebotRoutes from './routes/peacebot.js';
 import adminRoutes from './routes/adminRoutes.js';
+import storyRoutes from './routes/storyRoutes.js';
+
 
 // ✅ Setup Express App + HTTP Server
 const app = express();
@@ -51,6 +53,8 @@ app.use('/api/discussions', discussionRoutes);
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/ai/peacebot', peacebotRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/stories', storyRoutes);
+
 
 // ✅ Socket Events
 io.on('connection', (socket) => {
