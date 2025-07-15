@@ -16,7 +16,6 @@ import {
 const router = express.Router();
 
 /* ===== AUTH ROUTES ===== */
-
 // Register Admin or Super Admin
 router.post('/auth/register', register);
 
@@ -27,7 +26,6 @@ router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
 /* ===== INCIDENT REPORT ROUTES ===== */
-
 // GET: Dashboard Stats
 router.get('/admin/stats', async (req, res) => {
   try {
