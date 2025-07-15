@@ -69,7 +69,7 @@ export const createReport = async (req, res) => {
   }
 };
 
-// 📜 Get All Reports (Admin) — FIXED
+// 📜 Get All Reports (Admin)
 export const getAllReports = async (req, res) => {
   try {
     const reports = await Incident.find().sort({ createdAt: -1 });
@@ -118,6 +118,8 @@ export const getMapData = async (req, res) => {
     const stats = {
       pending: await Incident.countDocuments({ status: 'pending' }),
       resolved: await Incident.countDocuments({ status: 'resolved' }),
+      investigating: await Incident.countDocuments({ status: 'investigating' }),
+      escalated: await Incident.countDocuments({ status: 'escalated' }),
       total: incidents.length,
     };
 
@@ -151,7 +153,7 @@ export const deleteIncident = async (req, res) => {
   }
 };
 
-// ✅ Update Incident Status (PATCH)
+// ✅ Update Incident Status + Emit Full Data for Map Update
 export const updateIncidentStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,8 +175,16 @@ export const updateIncidentStatus = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('incident_updated', {
-        _id: incident._id,
+        id: incident._id,
+        type: incident.incidentType,
         status: incident.status,
+        date: incident.date,
+        locationName: incident.locationName || 'Unknown',
+        reporter: incident.reporter || 'anonymous',
+        location: {
+          lat: incident.location.coordinates[1],
+          lng: incident.location.coordinates[0],
+        },
       });
       console.log('🔄 incident_updated emitted:', incident._id);
     }
