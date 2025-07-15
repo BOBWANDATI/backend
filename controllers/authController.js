@@ -16,24 +16,36 @@ const formatDepartment = (value) => {
 export const register = async (req, res) => {
   try {
     const { username, password, email, role, department } = req.body;
-    const normalizedRole = role.toLowerCase();
 
+    // Validate required fields
+    if (!username || !email || !password || !role) {
+      return res.status(400).json({ msg: 'Please provide username, email, password, and role.' });
+    }
+    const normalizedRole = role.toLowerCase();
+    if (normalizedRole === 'admin' && !department) {
+      return res.status(400).json({ msg: 'Department is required for Admin role.' });
+    }
+
+    // Check username availability
     if (await Admin.findOne({ username })) {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
+    // Limit number of Super Admins and auto-approve them
     let approved = false;
     if (normalizedRole === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
       if (superCount >= 2) {
         return res.status(400).json({ msg: 'Only 2 Super Admins allowed.' });
       }
-      approved = true; // Super admins are auto-approved
+      approved = true;
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
     const formattedDepartment = normalizedRole === 'admin' ? formatDepartment(department) : undefined;
 
+    // Create new admin document
     const newAdmin = new Admin({
       username,
       email,
@@ -45,6 +57,7 @@ export const register = async (req, res) => {
 
     await newAdmin.save();
 
+    // Send approval email to Super Admins if new admin registered
     if (normalizedRole === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
@@ -60,13 +73,18 @@ export const register = async (req, res) => {
         </a>
       `;
 
-      for (const superAdmin of superAdmins) {
-        await mailTransporter.sendMail({
-          from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
-          to: superAdmin.email,
-          subject: '🛂 Admin Approval Request',
-          html: emailHTML
-        });
+      try {
+        for (const superAdmin of superAdmins) {
+          await mailTransporter.sendMail({
+            from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+            to: superAdmin.email,
+            subject: '🛂 Admin Approval Request',
+            html: emailHTML
+          });
+        }
+      } catch (mailErr) {
+        console.error('❌ Failed to send approval emails:', mailErr);
+        // Continue without failing registration
       }
     }
 
@@ -133,6 +151,9 @@ export const approveAdmin = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password, role } = req.body;
+    if (!username || !password || !role) {
+      return res.status(400).json({ msg: 'Please provide username, password, and role.' });
+    }
     const normalizedRole = role.toLowerCase();
 
     const admin = await Admin.findOne({ username, role: normalizedRole });
