@@ -5,8 +5,8 @@ export const createStory = async (req, res) => {
   try {
     const storyData = {
       ...req.body,
-      verified: true, // ✅ Ensure it's shown immediately
-      date: new Date(), // Optional: ensure date is added if not from frontend
+      verified: true,
+      date: new Date(),
       likes: 0,
       comments: 0
     };
@@ -29,7 +29,17 @@ export const getStories = async (req, res) => {
   }
 };
 
-// ✅ GET unverified stories (admin panel use)
+// ✅ GET all stories (admin panel)
+export const getAllStories = async (req, res) => {
+  try {
+    const stories = await Story.find().sort({ date: -1 });
+    res.json(stories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ GET unverified stories (admin use)
 export const getUnverifiedStories = async (req, res) => {
   try {
     const stories = await Story.find({ verified: false });
@@ -39,7 +49,7 @@ export const getUnverifiedStories = async (req, res) => {
   }
 };
 
-// ✅ VERIFY a pending story
+// ✅ VERIFY a story
 export const verifyStory = async (req, res) => {
   try {
     const story = await Story.findByIdAndUpdate(
@@ -49,6 +59,17 @@ export const verifyStory = async (req, res) => {
     );
     if (!story) return res.status(404).json({ message: 'Story not found' });
     res.json(story);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ DELETE a story (admin use)
+export const deleteStory = async (req, res) => {
+  try {
+    const story = await Story.findByIdAndDelete(req.params.id);
+    if (!story) return res.status(404).json({ message: 'Story not found' });
+    res.json({ message: '✅ Story deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
