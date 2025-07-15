@@ -99,7 +99,9 @@ router.get('/report', getAllReports);
 router.get('/report/map', getMapData);
 
 // ✅ PATCH: Update Incident Status
-router.patch('/report/:id/status', updateIncidentStatus);
+//router.patch('/report/:id/status', updateIncidentStatus);
+router.put('/report/:id/status', updateIncidentStatus); // ✅ matches frontend
+
 
 // ✅ DELETE: Delete Incident
 router.delete('/report/:id', deleteIncident);
