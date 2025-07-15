@@ -5,6 +5,7 @@ exports.getMapData = async (req, res) => {
     const incidents = await Incident.find().lean();
 
     const formatted = incidents.map(inc => ({
+      id: inc._id,  // ✅ Needed for update/delete matching
       type: inc.incidentType,
       status: inc.status,
       date: inc.date,
