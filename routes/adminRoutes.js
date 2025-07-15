@@ -7,10 +7,29 @@ import {
   updateIncidentStatus
 } from '../controllers/reportController.js';
 
+import {
+  register,
+  login,
+  approveAdmin
+} from '../controllers/authController.js';
+
 const router = express.Router();
 
-// ✅ GET: Dashboard Stats
-router.get('/stats', async (req, res) => {
+/* ===== AUTH ROUTES ===== */
+
+// Register Admin or Super Admin
+router.post('/auth/register', register);
+
+// Login Admin or Super Admin
+router.post('/auth/login', login);
+
+// Approve Admin (via email link with token)
+router.get('/auth/approve/:token', approveAdmin);
+
+/* ===== INCIDENT REPORT ROUTES ===== */
+
+// GET: Dashboard Stats
+router.get('/admin/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
     const pending = await Incident.countDocuments({ status: 'pending' });
@@ -27,8 +46,8 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// ✅ GET: Analytics Data (Line, Pie, Bar Charts)
-router.get('/analytics', async (req, res) => {
+// GET: Analytics Data (Line, Pie, Bar Charts)
+router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
       {
@@ -92,18 +111,16 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
-// ✅ GET: All Incident Reports
-router.get('/report', getAllReports);
+// GET: All Incident Reports
+router.get('/admin/report', getAllReports);
 
-// ✅ GET: Map Data
-router.get('/report/map', getMapData);
+// GET: Map Data
+router.get('/admin/report/map', getMapData);
 
-// ✅ PATCH: Update Incident Status
-//router.patch('/report/:id/status', updateIncidentStatus);
-router.put('/report/:id/status', updateIncidentStatus); // ✅ matches frontend
+// PUT: Update Incident Status
+router.put('/admin/report/:id/status', updateIncidentStatus);
 
-
-// ✅ DELETE: Delete Incident
-router.delete('/report/:id', deleteIncident);
+// DELETE: Delete Incident
+router.delete('/admin/report/:id', deleteIncident);
 
 export default router;
