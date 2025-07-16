@@ -1,6 +1,6 @@
 import Discussion from '../models/Discussion.js';
 
-// ✅ Create a new discussion
+// ✅ Create a new discussion + emit full list
 export const createDiscussion = async (req, res) => {
   const { title, location, category, message, sender } = req.body;
 
@@ -22,8 +22,9 @@ export const createDiscussion = async (req, res) => {
     });
 
     const savedDiscussion = await newDiscussion.save();
-
     const io = req.app.get('io');
+
+    // Emit individual event
     io.emit('new_discussion_created', {
       _id: savedDiscussion._id,
       title: savedDiscussion.title,
@@ -33,22 +34,27 @@ export const createDiscussion = async (req, res) => {
       createdAt: savedDiscussion.createdAt
     });
 
+    // Emit full list update
+    const allDiscussions = await Discussion.find().sort({ createdAt: -1 });
+    const formatted = allDiscussions.map(d => ({
+      _id: d._id,
+      title: d.title,
+      location: d.location,
+      category: d.category,
+      participants: d.participants,
+      createdAt: d.createdAt
+    }));
+    io.emit('all_discussions_update', formatted);
+
     console.log('✅ Discussion created:', savedDiscussion.title);
-    res.status(201).json({
-      _id: savedDiscussion._id,
-      title: savedDiscussion.title,
-      location: savedDiscussion.location,
-      category: savedDiscussion.category,
-      participants: savedDiscussion.participants,
-      createdAt: savedDiscussion.createdAt
-    });
+    res.status(201).json(formatted);
   } catch (error) {
     console.error('❌ Create Discussion Error:', error.message);
     res.status(500).json({ msg: 'Failed to create discussion.' });
   }
 };
 
-// ✅ Add message to existing discussion
+// ✅ Add message to existing discussion + emit update
 export const addMessage = async (req, res) => {
   const { text, sender } = req.body;
 
@@ -68,7 +74,6 @@ export const addMessage = async (req, res) => {
 
     discussion.messages.push(newMessage);
     discussion.participants += 1;
-
     const updatedDiscussion = await discussion.save();
 
     const io = req.app.get('io');
@@ -76,6 +81,18 @@ export const addMessage = async (req, res) => {
       discussionId: updatedDiscussion._id,
       message: newMessage
     });
+
+    // Emit updated discussion list
+    const allDiscussions = await Discussion.find().sort({ createdAt: -1 });
+    const formatted = allDiscussions.map(d => ({
+      _id: d._id,
+      title: d.title,
+      location: d.location,
+      category: d.category,
+      participants: d.participants,
+      createdAt: d.createdAt
+    }));
+    io.emit('all_discussions_update', formatted);
 
     res.status(200).json({
       _id: updatedDiscussion._id,
@@ -92,7 +109,6 @@ export const addMessage = async (req, res) => {
 export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
-
     const response = discussions.map(d => ({
       _id: d._id,
       title: d.title,
@@ -101,7 +117,6 @@ export const getAllDiscussions = async (req, res) => {
       participants: d.participants,
       createdAt: d.createdAt
     }));
-
     res.status(200).json(response);
   } catch (error) {
     console.error('❌ Get All Discussions Error:', error.message);
@@ -122,7 +137,7 @@ export const getDiscussionById = async (req, res) => {
   }
 };
 
-// ✅ Delete a discussion by ID
+// ✅ Delete a discussion + emit update
 export const deleteDiscussion = async (req, res) => {
   try {
     const discussion = await Discussion.findById(req.params.id);
@@ -130,10 +145,22 @@ export const deleteDiscussion = async (req, res) => {
       return res.status(404).json({ msg: 'Discussion not found' });
     }
 
-    await discussion.deleteOne(); // or use findByIdAndDelete
+    await discussion.deleteOne();
 
     const io = req.app.get('io');
     io.emit('discussion_deleted', { _id: req.params.id });
+
+    // Emit updated discussion list
+    const allDiscussions = await Discussion.find().sort({ createdAt: -1 });
+    const formatted = allDiscussions.map(d => ({
+      _id: d._id,
+      title: d.title,
+      location: d.location,
+      category: d.category,
+      participants: d.participants,
+      createdAt: d.createdAt
+    }));
+    io.emit('all_discussions_update', formatted);
 
     console.log('🗑️ Discussion deleted:', discussion.title);
     res.status(200).json({ msg: '✅ Discussion deleted successfully' });
