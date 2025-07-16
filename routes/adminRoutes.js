@@ -100,7 +100,9 @@ router.delete('/report/:id', deleteIncident);
 
 
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
-router.delete('/admin/discussions/:id', deleteDiscussion);           // ✅ DELETE discussion
-router.delete('/admin/stories/:id', deleteStory);                    // ✅ DELETE story
+//router.delete('/admin/discussions/:id', deleteDiscussion);           // ✅ DELETE discussion
+router.delete('/discussions/:id', deleteDiscussion);
+//router.delete('/admin/stories/:id', deleteStory);                    // ✅ DELETE story
+router.delete('/stories/:id', deleteStory);
 
 export default router;
