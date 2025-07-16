@@ -1,4 +1,7 @@
 import Admin from '../models/Admin.js';
+import Discussion from '../models/Discussion.js';
+import Story from '../models/Story.js';
+import Incident from '../models/Incident.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
@@ -17,21 +20,19 @@ export const register = async (req, res) => {
   try {
     const { username, password, email, role, department } = req.body;
 
-    // Validate required fields
     if (!username || !email || !password || !role) {
       return res.status(400).json({ msg: 'Please provide username, email, password, and role.' });
     }
+
     const normalizedRole = role.toLowerCase();
     if (normalizedRole === 'admin' && !department) {
       return res.status(400).json({ msg: 'Department is required for Admin role.' });
     }
 
-    // Check username availability
     if (await Admin.findOne({ username })) {
       return res.status(400).json({ msg: 'Username already taken.' });
     }
 
-    // Limit number of Super Admins and auto-approve them
     let approved = false;
     if (normalizedRole === 'super') {
       const superCount = await Admin.countDocuments({ role: 'super' });
@@ -41,11 +42,9 @@ export const register = async (req, res) => {
       approved = true;
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
     const formattedDepartment = normalizedRole === 'admin' ? formatDepartment(department) : undefined;
 
-    // Create new admin document
     const newAdmin = new Admin({
       username,
       email,
@@ -57,7 +56,6 @@ export const register = async (req, res) => {
 
     await newAdmin.save();
 
-    // Send approval email to Super Admins if new admin registered
     if (normalizedRole === 'admin') {
       const token = jwt.sign({ id: newAdmin._id }, process.env.JWT_SECRET, { expiresIn: '2d' });
       const approvalLink = `${BACKEND_URL}/api/auth/approve/${token}`;
@@ -73,18 +71,13 @@ export const register = async (req, res) => {
         </a>
       `;
 
-      try {
-        for (const superAdmin of superAdmins) {
-          await mailTransporter.sendMail({
-            from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
-            to: superAdmin.email,
-            subject: '🛂 Admin Approval Request',
-            html: emailHTML
-          });
-        }
-      } catch (mailErr) {
-        console.error('❌ Failed to send approval emails:', mailErr);
-        // Continue without failing registration
+      for (const superAdmin of superAdmins) {
+        await mailTransporter.sendMail({
+          from: `"AmaniLink Hub" <${process.env.EMAIL_SENDER}>`,
+          to: superAdmin.email,
+          subject: '🛂 Admin Approval Request',
+          html: emailHTML
+        });
       }
     }
 
@@ -100,7 +93,7 @@ export const register = async (req, res) => {
   }
 };
 
-// ✅ Approve Admin via Email Link
+// ✅ Approve Admin via Email
 export const approveAdmin = async (req, res) => {
   try {
     const { token } = req.params;
@@ -147,35 +140,27 @@ export const approveAdmin = async (req, res) => {
   }
 };
 
-// ✅ Login Admin or Super Admin
+// ✅ Login
 export const login = async (req, res) => {
   try {
     const { username, password, role } = req.body;
     if (!username || !password || !role) {
       return res.status(400).json({ msg: 'Please provide username, password, and role.' });
     }
+
     const normalizedRole = role.toLowerCase();
 
     const admin = await Admin.findOne({ username, role: normalizedRole });
-    if (!admin) {
-      console.log('🔍 Admin not found or role mismatch:', username, normalizedRole);
-      return res.status(400).json({ msg: 'Invalid credentials.' });
-    }
+    if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
 
     if (!admin.approved) {
-      console.log('⛔ Admin not approved yet:', admin.username);
       return res.status(403).json({ msg: '⏳ Account is pending approval.' });
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      console.log('❌ Invalid password for:', admin.username);
-      return res.status(400).json({ msg: 'Invalid credentials.' });
-    }
+    if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials.' });
 
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-    console.log('✅ Login success for:', admin.username);
 
     return res.json({
       token,
@@ -192,5 +177,38 @@ export const login = async (req, res) => {
   } catch (err) {
     console.error('❌ Login error:', err);
     return res.status(500).json({ msg: 'Server error during login.' });
+  }
+};
+
+// ✅ Get All Discussions
+export const getAllDiscussions = async (req, res) => {
+  try {
+    const discussions = await Discussion.find().sort({ createdAt: -1 });
+    res.json(discussions);
+  } catch (err) {
+    console.error('❌ Fetch discussions error:', err);
+    res.status(500).json({ msg: 'Server error fetching discussions.' });
+  }
+};
+
+// ✅ Get All Stories
+export const getAllStories = async (req, res) => {
+  try {
+    const stories = await Story.find().sort({ createdAt: -1 });
+    res.json(stories);
+  } catch (err) {
+    console.error('❌ Fetch stories error:', err);
+    res.status(500).json({ msg: 'Server error fetching stories.' });
+  }
+};
+
+// ✅ Get All Incidents
+export const getAllIncidents = async (req, res) => {
+  try {
+    const incidents = await Incident.find().sort({ createdAt: -1 });
+    res.json(incidents);
+  } catch (err) {
+    console.error('❌ Fetch incidents error:', err);
+    res.status(500).json({ msg: 'Server error fetching incidents.' });
   }
 };
