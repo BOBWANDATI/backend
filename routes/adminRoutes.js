@@ -91,8 +91,13 @@ router.get('/admin/analytics', async (req, res) => {
 /* ========== ADMIN INCIDENT CONTROLS ========== */
 router.get('/report', getAllReports);                                // View all incident reports
 router.get('/admin/report/map', getMapData);                         // Map view
-router.patch('/admin/report/:id/status', updateIncidentStatus);     // ✅ PATCH to update status
-router.delete('/admin/report/:id', deleteIncident);                  // ✅ DELETE incident
+//router.patch('/admin/report/:id/status', updateIncidentStatus);     // ✅ PATCH to update status
+router.patch('/report/:id/status', updateIncidentStatus);
+
+//router.delete('/admin/report/:id', deleteIncident);                  // ✅ DELETE incident
+// In adminRoutes.js
+router.delete('/report/:id', deleteIncident);
+
 
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
 router.delete('/admin/discussions/:id', deleteDiscussion);           // ✅ DELETE discussion
