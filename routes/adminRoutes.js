@@ -21,17 +21,19 @@ import {
 
 const router = express.Router();
 
-/* =================== AUTH ROUTES =================== */
+/* ========== AUTH ROUTES ========== */
 router.post('/auth/register', register);
 router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
-/* ============ PUBLIC FRONTEND ROUTES ============ */
-router.get('/incident', getAllIncidents);             // Fetch all incidents
-router.get('/discussions', getAllDiscussions);        // Fetch all discussions
-router.get('/stories', getAllStories);                // Fetch all stories
+/* ========== PUBLIC FRONTEND ROUTES ========== */
+router.get('/incident', getAllIncidents);         // View all public incidents
+router.get('/discussions', getAllDiscussions);    // Public discussions
+router.get('/stories', getAllStories);            // Public stories
 
-/* ============ ADMIN DASHBOARD STATS & CHARTS ============ */
+/* ========== ADMIN DASHBOARD ROUTES ========== */
+
+// 📊 Dashboard summary stats
 router.get('/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
@@ -49,6 +51,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// 📈 Admin analytics data (line, pie, bar charts)
 router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -85,16 +88,14 @@ router.get('/admin/analytics', async (req, res) => {
   }
 });
 
-/* ============ ADMIN INCIDENT CONTROLS ============ */
-router.get('/report', getAllReports);                         // Admin: View all reports
-router.get('/admin/report/map', getMapData);                  // Admin: Incident map data
-//router.put('/admin/report/:id/status', updateIncidentStatus); // Admin: Update incident status
-router.patch('/admin/report/:id/status', updateIncidentStatus);
+/* ========== ADMIN INCIDENT CONTROLS ========== */
+router.get('/report', getAllReports);                                // View all incident reports
+router.get('/admin/report/map', getMapData);                         // Map view
+router.patch('/admin/report/:id/status', updateIncidentStatus);     // ✅ PATCH to update status
+router.delete('/admin/report/:id', deleteIncident);                  // ✅ DELETE incident
 
-router.delete('/admin/report/:id', deleteIncident);           // Admin: Delete incident
-
-/* ============ ADMIN DISCUSSION & STORY CONTROLS ============ */
-router.delete('/admin/discussions/:id', deleteDiscussion);    // Admin: Delete discussion
-router.delete('/admin/stories/:id', deleteStory);             // Admin: Delete story
+/* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
+router.delete('/admin/discussions/:id', deleteDiscussion);           // ✅ DELETE discussion
+router.delete('/admin/stories/:id', deleteStory);                    // ✅ DELETE story
 
 export default router;
