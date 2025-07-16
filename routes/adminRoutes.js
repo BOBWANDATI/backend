@@ -6,10 +6,7 @@ import {
   approveAdmin,
   getAllDiscussions,
   getAllStories,
-  getAllIncidents,
-  createDiscussion,
-  createStory,
-  createIncident
+  getAllIncidents
 } from '../controllers/authController.js';
 
 import {
