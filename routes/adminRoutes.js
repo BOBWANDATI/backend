@@ -1,5 +1,6 @@
 import express from 'express';
 import Incident from '../models/incident.js';
+
 import {
   getAllReports,
   getMapData,
@@ -10,8 +11,10 @@ import {
 import {
   register,
   login,
-  approveAdmin
-} from '../controllers/authController.js';
+  approveAdmin,
+  getAllDiscussions,
+  getAllStories
+} from '../controllers/authController.js'; // 👈 make sure these are in your controller
 
 const router = express.Router();
 
@@ -120,5 +123,12 @@ router.put('/admin/report/:id/status', updateIncidentStatus);
 
 // DELETE: Delete Incident
 router.delete('/admin/report/:id', deleteIncident);
+
+/* ===== DISCUSSION & STORY ROUTES ===== */
+// GET: All Discussions
+router.get('/admin/discussions', getAllDiscussions);
+
+// GET: All Stories
+router.get('/admin/stories', getAllStories);
 
 export default router;
