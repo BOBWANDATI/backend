@@ -21,23 +21,17 @@ import {
 
 const router = express.Router();
 
-/* ===== AUTH ROUTES ===== */
+/* =================== AUTH ROUTES =================== */
 router.post('/auth/register', register);
 router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
-/* ===== PUBLIC FRONTEND ROUTES ===== */
-// Get all incidents
-router.get('/incident', getAllIncidents);
+/* ============ PUBLIC FRONTEND ROUTES ============ */
+router.get('/incident', getAllIncidents);             // Fetch all incidents
+router.get('/discussions', getAllDiscussions);        // Fetch all discussions
+router.get('/stories', getAllStories);                // Fetch all stories
 
-// Get all discussions
-router.get('/discussions', getAllDiscussions);
-
-// Get all stories
-router.get('/stories', getAllStories);
-
-/* ===== ADMIN DASHBOARD ROUTES ===== */
-// Dashboard stats summary
+/* ============ ADMIN DASHBOARD STATS & CHARTS ============ */
 router.get('/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
@@ -55,7 +49,6 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// Dashboard analytics charts (line, pie, bar)
 router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -92,14 +85,14 @@ router.get('/admin/analytics', async (req, res) => {
   }
 });
 
-/* ===== ADMIN INCIDENT CONTROLS ===== */
-router.get('/report', getAllReports);                 // all incident reports
-router.get('/admin/report/map', getMapData);          // map data for incidents
-router.put('/admin/report/:id/status', updateIncidentStatus); // change status
-router.delete('/admin/report/:id', deleteIncident);   // delete incident
+/* ============ ADMIN INCIDENT CONTROLS ============ */
+router.get('/report', getAllReports);                         // Admin: View all reports
+router.get('/admin/report/map', getMapData);                  // Admin: Incident map data
+router.put('/admin/report/:id/status', updateIncidentStatus); // Admin: Update incident status
+router.delete('/admin/report/:id', deleteIncident);           // Admin: Delete incident
 
-/* ===== ADMIN DISCUSSION & STORY CONTROLS ===== */
-router.delete('/admin/discussions/:id', deleteDiscussion);
-router.delete('/admin/stories/:id', deleteStory);
+/* ============ ADMIN DISCUSSION & STORY CONTROLS ============ */
+router.delete('/admin/discussions/:id', deleteDiscussion);    // Admin: Delete discussion
+router.delete('/admin/stories/:id', deleteStory);             // Admin: Delete story
 
 export default router;
