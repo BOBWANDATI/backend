@@ -9,7 +9,6 @@ import { mailTransporter } from '../server.js';
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
 
-// Normalize department input
 const formatDepartment = (value) => {
   if (!value) return 'Other';
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
@@ -19,7 +18,6 @@ const formatDepartment = (value) => {
 export const register = async (req, res) => {
   try {
     const { username, password, email, role, department } = req.body;
-
     if (!username || !email || !password || !role) {
       return res.status(400).json({ msg: 'Please provide username, email, password, and role.' });
     }
@@ -149,13 +147,10 @@ export const login = async (req, res) => {
     }
 
     const normalizedRole = role.toLowerCase();
-
     const admin = await Admin.findOne({ username, role: normalizedRole });
-    if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
 
-    if (!admin.approved) {
-      return res.status(403).json({ msg: '⏳ Account is pending approval.' });
-    }
+    if (!admin) return res.status(400).json({ msg: 'Invalid credentials.' });
+    if (!admin.approved) return res.status(403).json({ msg: '⏳ Account is pending approval.' });
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials.' });
@@ -180,7 +175,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Get All Discussions
+// ✅ Get All
 export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
@@ -191,7 +186,6 @@ export const getAllDiscussions = async (req, res) => {
   }
 };
 
-// ✅ Get All Stories
 export const getAllStories = async (req, res) => {
   try {
     const stories = await Story.find().sort({ createdAt: -1 });
@@ -202,7 +196,6 @@ export const getAllStories = async (req, res) => {
   }
 };
 
-// ✅ Get All Incidents
 export const getAllIncidents = async (req, res) => {
   try {
     const incidents = await Incident.find().sort({ createdAt: -1 });
@@ -210,5 +203,61 @@ export const getAllIncidents = async (req, res) => {
   } catch (err) {
     console.error('❌ Fetch incidents error:', err);
     res.status(500).json({ msg: 'Server error fetching incidents.' });
+  }
+};
+
+// ✅ Update Incident Status
+export const updateIncidentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const incident = await Incident.findByIdAndUpdate(id, { status }, { new: true });
+
+    if (!incident) return res.status(404).json({ msg: 'Incident not found' });
+
+    return res.json(incident);
+  } catch (err) {
+    console.error('❌ Update status error:', err);
+    res.status(500).json({ msg: 'Failed to update status' });
+  }
+};
+
+// ✅ Delete Incident
+export const deleteIncident = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Incident.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ msg: 'Incident not found' });
+    res.json({ msg: 'Incident deleted' });
+  } catch (err) {
+    console.error('❌ Delete incident error:', err);
+    res.status(500).json({ msg: 'Failed to delete incident' });
+  }
+};
+
+// ✅ Delete Discussion
+export const deleteDiscussion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Discussion.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ msg: 'Discussion not found' });
+    res.json({ msg: 'Discussion deleted' });
+  } catch (err) {
+    console.error('❌ Delete discussion error:', err);
+    res.status(500).json({ msg: 'Failed to delete discussion' });
+  }
+};
+
+// ✅ Delete Story
+export const deleteStory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Story.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ msg: 'Story not found' });
+    res.json({ msg: 'Story deleted' });
+  } catch (err) {
+    console.error('❌ Delete story error:', err);
+    res.status(500).json({ msg: 'Failed to delete story' });
   }
 };
