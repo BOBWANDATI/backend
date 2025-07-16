@@ -28,4 +28,7 @@ router.put('/:id/verify', verifyStory);
 // 🗑️ DELETE a story
 router.delete('/:id', deleteStory);
 
+<Route path="/stories/:id" element={<StoryDetail />} />
+
+
 export default router;
