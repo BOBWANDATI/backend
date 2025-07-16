@@ -14,22 +14,16 @@ import {
   approveAdmin,
   getAllDiscussions,
   getAllStories
-} from '../controllers/authController.js'; // 👈 make sure these are in your controller
+} from '../controllers/authController.js';
 
 const router = express.Router();
 
 /* ===== AUTH ROUTES ===== */
-// Register Admin or Super Admin
 router.post('/auth/register', register);
-
-// Login Admin or Super Admin
 router.post('/auth/login', login);
-
-// Approve Admin (via email link with token)
 router.get('/auth/approve/:token', approveAdmin);
 
 /* ===== INCIDENT REPORT ROUTES ===== */
-// GET: Dashboard Stats
 router.get('/admin/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
@@ -47,7 +41,6 @@ router.get('/admin/stats', async (req, res) => {
   }
 });
 
-// GET: Analytics Data (Line, Pie, Bar Charts)
 router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -112,23 +105,18 @@ router.get('/admin/analytics', async (req, res) => {
   }
 });
 
-// GET: All Incident Reports
 router.get('/admin/report', getAllReports);
-
-// GET: Map Data
 router.get('/admin/report/map', getMapData);
-
-// PUT: Update Incident Status
 router.put('/admin/report/:id/status', updateIncidentStatus);
-
-// DELETE: Delete Incident
 router.delete('/admin/report/:id', deleteIncident);
 
 /* ===== DISCUSSION & STORY ROUTES ===== */
-// GET: All Discussions
+// Admin routes
 router.get('/admin/discussions', getAllDiscussions);
-
-// GET: All Stories
 router.get('/admin/stories', getAllStories);
+
+// 👇 Add public routes to match frontend fetch URLs
+router.get('/discussions', getAllDiscussions);  // ✅ Match frontend: /api/discussions
+router.get('/stories', getAllStories);          // ✅ Match frontend: /api/stories
 
 export default router;
