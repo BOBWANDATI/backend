@@ -25,15 +25,15 @@ router.get('/auth/approve/:token', approveAdmin);
 
 /* ===== FRONTEND PUBLIC ROUTES ===== */
 // Create Incident Report (User-side)
-router.post('/incident', createIncident);
+// router.post('/incident', createIncident);
 router.get('/incident', getAllIncidents);
 
 // Create & Get Public Discussions
-router.post('/discussions', createDiscussion);
+// router.post('/discussions', createDiscussion);
 router.get('/discussions', getAllDiscussions);
 
 // Create & Get Public Stories
-router.post('/stories', createStory);
+// router.post('/stories', createStory);
 router.get('/stories', getAllStories);
 
 /* ===== ADMIN DASHBOARD ROUTES ===== */
