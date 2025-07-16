@@ -1,6 +1,6 @@
 import Incident from '../models/incident.js';
 
-// 🚨 Create New Report + Emit
+// 🚨 Create New Report + Emit Full List
 export const createReport = async (req, res) => {
   try {
     const {
@@ -14,7 +14,6 @@ export const createReport = async (req, res) => {
       followUp,
     } = req.body;
 
-    // ✅ Validate coordinates
     if (!location || !location.includes(',')) {
       return res.status(400).json({ msg: '❌ Invalid or missing coordinates (format: "lat,lng")' });
     }
@@ -22,17 +21,13 @@ export const createReport = async (req, res) => {
     const [latStr, lngStr] = location.split(',');
     const lat = parseFloat(latStr);
     const lng = parseFloat(lngStr);
-
     if (isNaN(lat) || isNaN(lng)) {
       return res.status(400).json({ msg: '❌ Coordinates must be valid numbers.' });
     }
 
     const newReport = new Incident({
       incidentType,
-      location: {
-        type: 'Point',
-        coordinates: [lng, lat],
-      },
+      location: { type: 'Point', coordinates: [lng, lat] },
       locationName: locationName || '',
       date: date || new Date(),
       description,
@@ -52,14 +47,30 @@ export const createReport = async (req, res) => {
         type: savedReport.incidentType,
         status: savedReport.status,
         date: savedReport.date,
-        location: {
-          lat,
-          lng,
-        },
+        location: { lat, lng },
         locationName: savedReport.locationName || '',
         reporter: savedReport.reporter,
       });
       console.log('📢 new_incident_reported emitted:', savedReport._id);
+
+      // Emit full updated list to admin dashboard
+      const allReports = await Incident.find().sort({ createdAt: -1 });
+      const formattedReports = allReports.map(i => ({
+        _id: i._id,
+        incidentType: i.incidentType,
+        locationName: i.locationName || '',
+        coordinates: {
+          lat: i.location?.coordinates?.[1] || '',
+          lng: i.location?.coordinates?.[0] || '',
+        },
+        urgency: i.urgency,
+        description: i.description,
+        status: i.status,
+        date: i.date,
+        anonymous: i.reporter === 'anonymous',
+        reportedBy: i.reporter,
+      }));
+      io.emit('all_incidents_update', formattedReports);
     }
 
     res.status(201).json({ msg: '✅ Report submitted successfully', data: savedReport });
@@ -69,12 +80,11 @@ export const createReport = async (req, res) => {
   }
 };
 
-// 📜 Get All Reports (Admin)
+// 📜 Get All Reports
 export const getAllReports = async (req, res) => {
   try {
     const reports = await Incident.find().sort({ createdAt: -1 });
-
-    const formattedReports = reports.map((i) => ({
+    const formattedReports = reports.map(i => ({
       _id: i._id,
       incidentType: i.incidentType,
       locationName: i.locationName || '',
@@ -89,7 +99,6 @@ export const getAllReports = async (req, res) => {
       anonymous: i.reporter === 'anonymous',
       reportedBy: i.reporter,
     }));
-
     res.status(200).json(formattedReports);
   } catch (err) {
     console.error('❌ Error fetching reports:', err);
@@ -101,7 +110,6 @@ export const getAllReports = async (req, res) => {
 export const getMapData = async (req, res) => {
   try {
     const incidents = await Incident.find();
-
     const formattedIncidents = incidents.map(i => ({
       id: i._id,
       type: i.incidentType,
@@ -134,7 +142,6 @@ export const getMapData = async (req, res) => {
 export const deleteIncident = async (req, res) => {
   try {
     const { id } = req.params;
-
     const deleted = await Incident.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ msg: '❌ Incident not found' });
@@ -144,6 +151,25 @@ export const deleteIncident = async (req, res) => {
     if (io) {
       io.emit('incident_deleted', { id });
       console.log('🗑️ incident_deleted emitted:', id);
+
+      // Emit updated list after delete
+      const allReports = await Incident.find().sort({ createdAt: -1 });
+      const formattedReports = allReports.map(i => ({
+        _id: i._id,
+        incidentType: i.incidentType,
+        locationName: i.locationName || '',
+        coordinates: {
+          lat: i.location?.coordinates?.[1] || '',
+          lng: i.location?.coordinates?.[0] || '',
+        },
+        urgency: i.urgency,
+        description: i.description,
+        status: i.status,
+        date: i.date,
+        anonymous: i.reporter === 'anonymous',
+        reportedBy: i.reporter,
+      }));
+      io.emit('all_incidents_update', formattedReports);
     }
 
     res.status(200).json({ msg: '✅ Incident deleted successfully' });
@@ -153,7 +179,7 @@ export const deleteIncident = async (req, res) => {
   }
 };
 
-// ✅ Update Incident Status + Emit Full Data for Map Update
+// 🔄 Update Incident Status + Emit
 export const updateIncidentStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -187,6 +213,25 @@ export const updateIncidentStatus = async (req, res) => {
         },
       });
       console.log('🔄 incident_updated emitted:', incident._id);
+
+      // Emit updated list after status update
+      const allReports = await Incident.find().sort({ createdAt: -1 });
+      const formattedReports = allReports.map(i => ({
+        _id: i._id,
+        incidentType: i.incidentType,
+        locationName: i.locationName || '',
+        coordinates: {
+          lat: i.location?.coordinates?.[1] || '',
+          lng: i.location?.coordinates?.[0] || '',
+        },
+        urgency: i.urgency,
+        description: i.description,
+        status: i.status,
+        date: i.date,
+        anonymous: i.reporter === 'anonymous',
+        reportedBy: i.reporter,
+      }));
+      io.emit('all_incidents_update', formattedReports);
     }
 
     res.status(200).json({ msg: '✅ Status updated successfully', incident });
