@@ -88,7 +88,9 @@ router.get('/admin/analytics', async (req, res) => {
 /* ============ ADMIN INCIDENT CONTROLS ============ */
 router.get('/report', getAllReports);                         // Admin: View all reports
 router.get('/admin/report/map', getMapData);                  // Admin: Incident map data
-router.put('/admin/report/:id/status', updateIncidentStatus); // Admin: Update incident status
+//router.put('/admin/report/:id/status', updateIncidentStatus); // Admin: Update incident status
+router.patch('/admin/report/:id/status', updateIncidentStatus);
+
 router.delete('/admin/report/:id', deleteIncident);           // Admin: Delete incident
 
 /* ============ ADMIN DISCUSSION & STORY CONTROLS ============ */
