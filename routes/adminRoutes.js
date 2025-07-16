@@ -41,7 +41,7 @@ router.get('/stories', getAllStories);
 
 /* ===== ADMIN DASHBOARD ROUTES ===== */
 // Dashboard Stats
-router.get('/admin/stats', async (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
     const pending = await Incident.countDocuments({ status: 'pending' });
@@ -96,7 +96,7 @@ router.get('/admin/analytics', async (req, res) => {
 });
 
 // Admin Incident Controls
-router.get('/admin/report', getAllReports);
+router.get('/report', getAllReports);
 router.get('/admin/report/map', getMapData);
 router.put('/admin/report/:id/status', updateIncidentStatus);
 router.delete('/admin/report/:id', deleteIncident);
