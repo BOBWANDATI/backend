@@ -1,12 +1,15 @@
 import express from 'express';
 import Incident from '../models/Incident.js';
+
 import {
   register,
   login,
   approveAdmin,
   getAllDiscussions,
   getAllStories,
-  getAllIncidents
+  getAllIncidents,
+  deleteDiscussion,
+  deleteStory
 } from '../controllers/authController.js';
 
 import {
@@ -23,21 +26,18 @@ router.post('/auth/register', register);
 router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
-/* ===== FRONTEND PUBLIC ROUTES ===== */
-// Create Incident Report (User-side)
-// router.post('/incident', createIncident);
+/* ===== PUBLIC FRONTEND ROUTES ===== */
+// Get all incidents
 router.get('/incident', getAllIncidents);
 
-// Create & Get Public Discussions
-// router.post('/discussions', createDiscussion);
+// Get all discussions
 router.get('/discussions', getAllDiscussions);
 
-// Create & Get Public Stories
-// router.post('/stories', createStory);
+// Get all stories
 router.get('/stories', getAllStories);
 
 /* ===== ADMIN DASHBOARD ROUTES ===== */
-// Dashboard Stats
+// Dashboard stats summary
 router.get('/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
@@ -55,7 +55,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// Dashboard Charts (Line, Pie, Bar)
+// Dashboard analytics charts (line, pie, bar)
 router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -92,10 +92,14 @@ router.get('/admin/analytics', async (req, res) => {
   }
 });
 
-// Admin Incident Controls
-router.get('/report', getAllReports);
-router.get('/admin/report/map', getMapData);
-router.put('/admin/report/:id/status', updateIncidentStatus);
-router.delete('/admin/report/:id', deleteIncident);
+/* ===== ADMIN INCIDENT CONTROLS ===== */
+router.get('/report', getAllReports);                 // all incident reports
+router.get('/admin/report/map', getMapData);          // map data for incidents
+router.put('/admin/report/:id/status', updateIncidentStatus); // change status
+router.delete('/admin/report/:id', deleteIncident);   // delete incident
+
+/* ===== ADMIN DISCUSSION & STORY CONTROLS ===== */
+router.delete('/admin/discussions/:id', deleteDiscussion);
+router.delete('/admin/stories/:id', deleteStory);
 
 export default router;
