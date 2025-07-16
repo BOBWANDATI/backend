@@ -1,5 +1,5 @@
 import express from 'express';
-import Incident from '../models/incident.js';
+import Incident from '../models/Incident.js';
 
 import {
   getAllReports,
