@@ -1,4 +1,4 @@
-import Incident from '../models/incident.js';
+import Incident from '../models/Incident.js';
 
 // 🚨 Create New Report + Emit Full List
 export const createReport = async (req, res) => {
