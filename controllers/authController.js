@@ -223,6 +223,7 @@ export const updateIncidentStatus = async (req, res) => {
   }
 };
 
+
 // ✅ Delete Incident
 export const deleteIncident = async (req, res) => {
   try {
