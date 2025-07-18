@@ -27,6 +27,10 @@ import {
   deleteNews
 } from '../controllers/authController.js';
 
+
+import { getAllStories, updateStoryStatus, deleteStory } from '../controllers/adminStoryController.js';
+
+
 /* ========== AUTH ROUTES ========== */
 router.post('/auth/register', register);
 router.post('/auth/login', login);
@@ -104,5 +108,11 @@ router.delete('/report/:id', deleteIncident);
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
 router.delete('/discussions/:id', deleteDiscussion);
 router.delete('/stories/:id', deleteStory);
+
+
+
+router.get('/stories', protectAdmin, getAllStories);
+router.put('/stories/:id/status', protectAdmin, updateStoryStatus);
+router.delete('/stories/:id', protectAdmin, deleteStory);
 
 export default router;
