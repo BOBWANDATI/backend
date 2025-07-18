@@ -1,4 +1,6 @@
 import express from 'express';
+const router = express.Router(); // ✅ Declare FIRST before using
+
 import Incident from '../models/Incident.js';
 
 import {
@@ -19,30 +21,11 @@ import {
   updateIncidentStatus
 } from '../controllers/reportController.js';
 
-
-
 import {
   getAllNews,
   updateNewsStatus,
   deleteNews
 } from '../controllers/adminController.js';
-
-//const router = express.Router();
-
-// ✅ Get all news articles
-router.get('/news', getAllNews);
-
-// ✅ Update news status (verify, reject)
-router.put('/news/:id/status', updateNewsStatus);
-
-// ✅ Delete news
-router.delete('/news/:id', deleteNews);
-
-
-
-
-
-const router = express.Router();
 
 /* ========== AUTH ROUTES ========== */
 router.post('/auth/register', register);
@@ -50,13 +33,15 @@ router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
 /* ========== PUBLIC FRONTEND ROUTES ========== */
-router.get('/incident', getAllIncidents);         // View all public incidents
-router.get('/discussions', getAllDiscussions);    // Public discussions
-router.get('/stories', getAllStories);            // Public stories
+router.get('/incident', getAllIncidents);         
+router.get('/discussions', getAllDiscussions);    
+router.get('/stories', getAllStories);            
 
 /* ========== ADMIN DASHBOARD ROUTES ========== */
+router.get('/news', getAllNews);                            // ✅ Get all news
+router.put('/news/:id/status', updateNewsStatus);           // ✅ Verify/Reject
+router.delete('/news/:id', deleteNews);                     // ✅ Delete news
 
-// 📊 Dashboard summary stats
 router.get('/stats', async (req, res) => {
   try {
     const total = await Incident.countDocuments();
@@ -74,7 +59,6 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// 📈 Admin analytics data (line, pie, bar charts)
 router.get('/admin/analytics', async (req, res) => {
   try {
     const incidents = await Incident.aggregate([
@@ -112,24 +96,13 @@ router.get('/admin/analytics', async (req, res) => {
 });
 
 /* ========== ADMIN INCIDENT CONTROLS ========== */
-router.get('/report', getAllReports);                                // View all incident reports
-router.get('/admin/report/map', getMapData);                         // Map view
-//router.patch('/admin/report/:id/status', updateIncidentStatus);     // ✅ PATCH to update status
+router.get('/report', getAllReports);
+router.get('/admin/report/map', getMapData);
 router.patch('/report/:id/status', updateIncidentStatus);
-
-//router.delete('/admin/report/:id', deleteIncident);                  // ✅ DELETE incident
-// In adminRoutes.js
 router.delete('/report/:id', deleteIncident);
 
-
-
-
-
-
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
-//router.delete('/admin/discussions/:id', deleteDiscussion);           // ✅ DELETE discussion
 router.delete('/discussions/:id', deleteDiscussion);
-//router.delete('/admin/stories/:id', deleteStory);                    // ✅ DELETE story
 router.delete('/stories/:id', deleteStory);
 
 export default router;
