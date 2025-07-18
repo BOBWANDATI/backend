@@ -5,6 +5,7 @@ import Incident from '../models/Incident.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
+//import News from '../models/News.js';
 import News from '../models/News.js';
 
 
@@ -278,8 +279,6 @@ export const getAllNews = async (req, res) => {
   }
 };
 
-
-
 // ✅ Update News Status (verify or reject)
 export const updateNewsStatus = async (req, res) => {
   try {
@@ -290,11 +289,10 @@ export const updateNewsStatus = async (req, res) => {
       return res.status(400).json({ msg: 'Invalid status' });
     }
 
-    const updatedNews = await News.findByIdAndUpdate(id, { status }, { new: true });
+    const updated = await News.findByIdAndUpdate(id, { status }, { new: true });
+    if (!updated) return res.status(404).json({ msg: 'News not found' });
 
-    if (!updatedNews) return res.status(404).json({ msg: 'News not found' });
-
-    return res.json(updatedNews);
+    res.json(updated);
   } catch (err) {
     console.error('❌ Update news status error:', err);
     res.status(500).json({ msg: 'Failed to update news status' });
@@ -307,6 +305,7 @@ export const deleteNews = async (req, res) => {
     const { id } = req.params;
     const deleted = await News.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'News not found' });
+
     res.json({ msg: 'News deleted' });
   } catch (err) {
     console.error('❌ Delete news error:', err);
