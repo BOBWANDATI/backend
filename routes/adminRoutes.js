@@ -20,11 +20,21 @@ import {
 } from '../controllers/reportController.js';
 
 
-import { getAllNews, verifyNews, deleteNews } from '../controllers/newsController.js';
+import express from 'express';
+import {
+  getAllNews,
+  updateNewsStatus,
+  deleteNews,
+  // ... other controllers
+} from '../controllers/authController.js';
 
-router.get('/news', getAllNews);  // ✅ This makes /api/admin/news work
-router.patch('/news/:id/verify', verifyNews);
-router.delete('/news/:id', deleteNews);
+const router = express.Router();
+
+router.get('/news', getAllNews); // ✅ must exist
+router.patch('/news/:id/verify', updateNewsStatus); // ✅ needed to change status
+router.delete('/news/:id', deleteNews); // ✅ needed to delete
+
+//export default router;
 
 
 
