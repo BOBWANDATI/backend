@@ -1,14 +1,11 @@
 import Admin from '../models/Admin.js';
 import Discussion from '../models/Discussion.js';
-//import Story from '../models/Story.js';
 import Story from '../models/Story.js';
 import Incident from '../models/Incident.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
-//import News from '../models/News.js';
 import News from '../models/News.js';
-
 
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
@@ -179,7 +176,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Get All
+// ✅ Get All Discussions
 export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
@@ -190,6 +187,7 @@ export const getAllDiscussions = async (req, res) => {
   }
 };
 
+// ✅ Get All Stories
 export const getAllStories = async (req, res) => {
   try {
     const stories = await Story.find().sort({ createdAt: -1 });
@@ -200,6 +198,7 @@ export const getAllStories = async (req, res) => {
   }
 };
 
+// ✅ Get All Incidents
 export const getAllIncidents = async (req, res) => {
   try {
     const incidents = await Incident.find().sort({ createdAt: -1 });
@@ -217,7 +216,6 @@ export const updateIncidentStatus = async (req, res) => {
     const { status } = req.body;
 
     const incident = await Incident.findByIdAndUpdate(id, { status }, { new: true });
-
     if (!incident) return res.status(404).json({ msg: 'Incident not found' });
 
     return res.json(incident);
@@ -226,7 +224,6 @@ export const updateIncidentStatus = async (req, res) => {
     res.status(500).json({ msg: 'Failed to update status' });
   }
 };
-
 
 // ✅ Delete Incident
 export const deleteIncident = async (req, res) => {
@@ -266,8 +263,6 @@ export const deleteStory = async (req, res) => {
     res.status(500).json({ msg: 'Failed to delete story' });
   }
 };
-
-
 
 // ✅ Get All News
 export const getAllNews = async (req, res) => {
@@ -313,39 +308,3 @@ export const deleteNews = async (req, res) => {
     res.status(500).json({ msg: 'Failed to delete news' });
   }
 };
-
-
-
-
-// GET all stories
-export const getAllStories = async (req, res) => {
-  try {
-    const stories = await Story.find().sort({ createdAt: -1 });
-    res.json(stories);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch stories' });
-  }
-};
-
-// UPDATE status
-export const updateStoryStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  try {
-    const updated = await Story.findByIdAndUpdate(id, { status }, { new: true });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: 'Update failed' });
-  }
-};
-
-// DELETE story
-export const deleteStory = async (req, res) => {
-  try {
-    await Story.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Deleted' });
-  } catch (err) {
-    res.status(500).json({ error: 'Delete failed' });
-  }
-};
-
