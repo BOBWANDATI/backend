@@ -20,21 +20,25 @@ import {
 } from '../controllers/reportController.js';
 
 
-import express from 'express';
+
 import {
   getAllNews,
   updateNewsStatus,
-  deleteNews,
-  // ... other controllers
-} from '../controllers/authController.js';
+  deleteNews
+} from '../controllers/adminController.js';
 
 const router = express.Router();
 
-router.get('/news', getAllNews); // ✅ must exist
-router.patch('/news/:id/verify', updateNewsStatus); // ✅ needed to change status
-router.delete('/news/:id', deleteNews); // ✅ needed to delete
+// ✅ Get all news articles
+router.get('/news', getAllNews);
 
-//export default router;
+// ✅ Update news status (verify, reject)
+router.put('/news/:id/status', updateNewsStatus);
+
+// ✅ Delete news
+router.delete('/news/:id', deleteNews);
+
+
 
 
 
