@@ -52,6 +52,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const io = new Server(server, { cors: corsOptions });
 app.set('io', io);
 
+// Export the io instance
+export { io };
+
 // ✅ Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
