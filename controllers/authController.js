@@ -5,6 +5,8 @@ import Incident from '../models/Incident.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mailTransporter } from '../server.js';
+import News from '../models/News.js';
+
 
 const CLIENT_BASE_URL = process.env.CLIENT_BASE_URL || 'https://your-frontend.vercel.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://backend-m6u3.onrender.com';
@@ -262,3 +264,53 @@ export const deleteStory = async (req, res) => {
     res.status(500).json({ msg: 'Failed to delete story' });
   }
 };
+
+
+
+// ✅ Get All News
+export const getAllNews = async (req, res) => {
+  try {
+    const news = await News.find().sort({ createdAt: -1 });
+    res.json(news);
+  } catch (err) {
+    console.error('❌ Fetch news error:', err);
+    res.status(500).json({ msg: 'Server error fetching news.' });
+  }
+};
+
+
+
+// ✅ Update News Status (verify or reject)
+export const updateNewsStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'verified', 'rejected'].includes(status)) {
+      return res.status(400).json({ msg: 'Invalid status' });
+    }
+
+    const updatedNews = await News.findByIdAndUpdate(id, { status }, { new: true });
+
+    if (!updatedNews) return res.status(404).json({ msg: 'News not found' });
+
+    return res.json(updatedNews);
+  } catch (err) {
+    console.error('❌ Update news status error:', err);
+    res.status(500).json({ msg: 'Failed to update news status' });
+  }
+};
+
+// ✅ Delete News
+export const deleteNews = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await News.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ msg: 'News not found' });
+    res.json({ msg: 'News deleted' });
+  } catch (err) {
+    console.error('❌ Delete news error:', err);
+    res.status(500).json({ msg: 'Failed to delete news' });
+  }
+};
+
