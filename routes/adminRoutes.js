@@ -25,7 +25,7 @@ import {
   getAllNews,
   updateNewsStatus,
   deleteNews
-} from '../controllers/adminController.js';
+} from '../controllers/authController.js';
 
 /* ========== AUTH ROUTES ========== */
 router.post('/auth/register', register);
