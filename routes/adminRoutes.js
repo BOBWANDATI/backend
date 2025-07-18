@@ -19,6 +19,14 @@ import {
   updateIncidentStatus
 } from '../controllers/reportController.js';
 
+
+import {
+  getAllNews,
+  updateNewsStatus,
+  deleteNews
+} from '../controllers/adminController.js';
+
+
 const router = express.Router();
 
 /* ========== AUTH ROUTES ========== */
@@ -97,6 +105,14 @@ router.patch('/report/:id/status', updateIncidentStatus);
 //router.delete('/admin/report/:id', deleteIncident);                  // ✅ DELETE incident
 // In adminRoutes.js
 router.delete('/report/:id', deleteIncident);
+
+
+
+/* ========== ADMIN NEWS CONTROLS ========== */
+router.get('/news', getAllNews); // ✅ View all submitted news
+router.patch('/news/:id/status', updateNewsStatus); // ✅ Approve or reject
+router.delete('/news/:id', deleteNews); // ✅ Delete news item
+
 
 
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
