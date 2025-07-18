@@ -20,14 +20,12 @@ import {
 } from '../controllers/reportController.js';
 
 
-import {
-  getAllNews,           // Public verified news
-  getAllAdminNews,      // All news for admin
-  getSingleNews,
-  postNews,
-  verifyNews,
-  deleteNews
-} from '../controllers/newsController.js';
+import { getAllNews, verifyNews, deleteNews } from '../controllers/newsController.js';
+
+router.get('/news', getAllNews);  // ✅ This makes /api/admin/news work
+router.patch('/news/:id/verify', verifyNews);
+router.delete('/news/:id', deleteNews);
+
 
 
 const router = express.Router();
@@ -111,11 +109,6 @@ router.delete('/report/:id', deleteIncident);
 
 
 
-router.get('/news', getAllNews);                  // ✅ Public verified news
-router.post('/news', postNews);                   // ✅ User submits news
-router.get('/admin/news', getAllAdminNews);       // ✅ Admin fetches all
-router.patch('/admin/news/:id/verify', verifyNews); // ✅ Admin verifies
-router.delete('/admin/news/:id', deleteNews);     // ✅ Admin deletes
 
 
 
