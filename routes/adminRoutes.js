@@ -1,5 +1,5 @@
 import express from 'express';
-const router = express.Router(); // ✅ Declare FIRST before using
+const router = express.Router();
 
 import Incident from '../models/Incident.js';
 
@@ -11,7 +11,11 @@ import {
   getAllStories,
   getAllIncidents,
   deleteDiscussion,
-  deleteStory
+  deleteStory,
+  getAllNews,
+  updateNewsStatus,
+  deleteNews,
+  updateStoryStatus
 } from '../controllers/authController.js';
 
 import {
@@ -21,29 +25,19 @@ import {
   updateIncidentStatus
 } from '../controllers/reportController.js';
 
-import {
-  getAllNews,
-  updateNewsStatus,
-  deleteNews
-} from '../controllers/authController.js';
-
-
-//import { getAllStories, updateStoryStatus, deleteStory } from '../controllers/adminStoryController.js';
-
-
 /* ========== AUTH ROUTES ========== */
 router.post('/auth/register', register);
 router.post('/auth/login', login);
 router.get('/auth/approve/:token', approveAdmin);
 
 /* ========== PUBLIC FRONTEND ROUTES ========== */
-router.get('/incident', getAllIncidents);         
-router.get('/discussions', getAllDiscussions);    
-router.get('/stories', getAllStories);            
+router.get('/incident', getAllIncidents);
+router.get('/discussions', getAllDiscussions);
+router.get('/stories', getAllStories);
 
 /* ========== ADMIN DASHBOARD ROUTES ========== */
 router.get('/news', getAllNews);                            // ✅ Get all news
-router.put('/news/:id/status', updateNewsStatus);           // ✅ Verify/Reject
+router.put('/news/:id/status', updateNewsStatus);           // ✅ Verify/Reject news
 router.delete('/news/:id', deleteNews);                     // ✅ Delete news
 
 router.get('/stats', async (req, res) => {
@@ -109,10 +103,7 @@ router.delete('/report/:id', deleteIncident);
 router.delete('/discussions/:id', deleteDiscussion);
 router.delete('/stories/:id', deleteStory);
 
-
-
-router.get('/stories', protectAdmin, getAllStories);
-router.put('/stories/:id/status', protectAdmin, updateStoryStatus);
-router.delete('/stories/:id', protectAdmin, deleteStory);
+// ✅ Optional Story Moderation Routes (if needed)
+router.put('/stories/:id/status', updateStoryStatus);
 
 export default router;
