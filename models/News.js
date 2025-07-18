@@ -15,18 +15,36 @@
 
 
 // models/News.js
+//import mongoose from 'mongoose';
+
+//const newsSchema = new mongoose.Schema(
+ // {
+  //  title: { type: String, required: true },
+    //content: { type: String, required: true },
+   // image: { type: String },
+   // link: { type: String },
+    //verified: { type: Boolean, default: false }, // ⬅️ NEW FIELD
+  //},
+ // { timestamps: true }
+//);
+
+//export default mongoose.model('News', newsSchema);
 import mongoose from 'mongoose';
 
-const newsSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true },
-    content: { type: String, required: true },
-    image: { type: String },
-    link: { type: String },
-    verified: { type: Boolean, default: false }, // ⬅️ NEW FIELD
+const mongoose = require('mongoose');
+
+const newsSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  image: String,
+  link: String,
+  status: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
   },
-  { timestamps: true }
-);
+}, { timestamps: true });
 
 export default mongoose.model('News', newsSchema);
+
 
