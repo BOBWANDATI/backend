@@ -1,11 +1,30 @@
 // routes/newsRoutes.js
+//import express from 'express';
+//import { getAllNews, getSingleNews, postNews } from '../controllers/newsController.js';
+
+//const router = express.Router();
+
+//router.get('/', getAllNews);
+//router.get('/:id', getSingleNews);
+//router.post('/', postNews);
+
+//export default router;
+
+// routes/newsRoutes.js
 import express from 'express';
-import { getAllNews, getSingleNews, postNews } from '../controllers/newsController.js';
+import {
+  getAllNews,
+  getSingleNews,
+  postNews,
+  verifyNews,
+} from '../controllers/newsController.js';
 
 const router = express.Router();
 
 router.get('/', getAllNews);
 router.get('/:id', getSingleNews);
 router.post('/', postNews);
+router.patch('/:id/verify', verifyNews); // ✅ Admin endpoint to verify
 
 export default router;
+
