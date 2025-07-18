@@ -21,10 +21,13 @@ import {
 
 
 import {
-  getAllNews,
-  updateNewsStatus,
+  getAllNews,           // Public verified news
+  getAllAdminNews,      // All news for admin
+  getSingleNews,
+  postNews,
+  verifyNews,
   deleteNews
-} from '../controllers/adminController.js';
+} from '../controllers/newsController.js';
 
 
 const router = express.Router();
@@ -108,10 +111,11 @@ router.delete('/report/:id', deleteIncident);
 
 
 
-/* ========== ADMIN NEWS CONTROLS ========== */
-router.get('/news', getAllNews); // ✅ View all submitted news
-router.patch('/news/:id/status', updateNewsStatus); // ✅ Approve or reject
-router.delete('/news/:id', deleteNews); // ✅ Delete news item
+router.get('/news', getAllNews);                  // ✅ Public verified news
+router.post('/news', postNews);                   // ✅ User submits news
+router.get('/admin/news', getAllAdminNews);       // ✅ Admin fetches all
+router.patch('/admin/news/:id/verify', verifyNews); // ✅ Admin verifies
+router.delete('/admin/news/:id', deleteNews);     // ✅ Admin deletes
 
 
 
