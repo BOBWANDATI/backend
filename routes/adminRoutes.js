@@ -27,7 +27,7 @@ import {
   deleteNews
 } from '../controllers/adminController.js';
 
-const router = express.Router();
+//const router = express.Router();
 
 // ✅ Get all news articles
 router.get('/news', getAllNews);
