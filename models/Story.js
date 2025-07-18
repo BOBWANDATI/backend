@@ -2,14 +2,13 @@ import mongoose from 'mongoose';
 
 const storySchema = new mongoose.Schema({
   title: { type: String, required: true },
-  category: { type: String, required: true },
+  category: { type: String, enum: ['reconciliation', 'healing', 'community'], default: 'reconciliation' },
   content: { type: String, required: true },
-  author: { type: String, default: 'Anonymous' },
-  location: { type: String },
-  date: { type: Date, default: Date.now },
-  likes: { type: Number, default: 0 },
-  comments: { type: Number, default: 0 },
-  verified: { type: Boolean, default: false }
-});
+  author: String,
+  location: String,
+  imageUrl: String,
+  videoUrl: String,
+  status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+}, { timestamps: true });
 
 export default mongoose.model('Story', storySchema);
