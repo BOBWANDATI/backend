@@ -1,5 +1,6 @@
 import Admin from '../models/Admin.js';
 import Discussion from '../models/Discussion.js';
+//import Story from '../models/Story.js';
 import Story from '../models/Story.js';
 import Incident from '../models/Incident.js';
 import bcrypt from 'bcryptjs';
@@ -310,6 +311,41 @@ export const deleteNews = async (req, res) => {
   } catch (err) {
     console.error('❌ Delete news error:', err);
     res.status(500).json({ msg: 'Failed to delete news' });
+  }
+};
+
+
+
+
+// GET all stories
+export const getAllStories = async (req, res) => {
+  try {
+    const stories = await Story.find().sort({ createdAt: -1 });
+    res.json(stories);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch stories' });
+  }
+};
+
+// UPDATE status
+export const updateStoryStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const updated = await Story.findByIdAndUpdate(id, { status }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Update failed' });
+  }
+};
+
+// DELETE story
+export const deleteStory = async (req, res) => {
+  try {
+    await Story.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed' });
   }
 };
 
