@@ -28,7 +28,7 @@ import {
 } from '../controllers/authController.js';
 
 
-import { getAllStories, updateStoryStatus, deleteStory } from '../controllers/adminStoryController.js';
+//import { getAllStories, updateStoryStatus, deleteStory } from '../controllers/adminStoryController.js';
 
 
 /* ========== AUTH ROUTES ========== */
