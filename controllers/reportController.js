@@ -52,7 +52,6 @@ export const createReport = async (req, res) => {
         locationName: savedReport.locationName || '',
         reporter: savedReport.reporter,
       });
-      console.log('📢 new_incident_reported emitted:', savedReport._id);
 
       const allReports = await Incident.find().sort({ createdAt: -1 });
       const formattedReports = allReports.map(i => ({
@@ -93,12 +92,39 @@ export const deleteIncident = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('incident_deleted', { id });
-      console.log('🗑️ incident_deleted emitted:', id);
     }
 
     res.status(200).json({ msg: '✅ Incident deleted successfully', id });
   } catch (err) {
     console.error('❌ Error deleting incident:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+};
+
+// 📄 Get All Reports
+export const getAllReports = async (req, res) => {
+  try {
+    const reports = await Incident.find().sort({ createdAt: -1 });
+
+    const formatted = reports.map(i => ({
+      _id: i._id,
+      incidentType: i.incidentType,
+      locationName: i.locationName || '',
+      coordinates: {
+        lat: i.location?.coordinates?.[1] || '',
+        lng: i.location?.coordinates?.[0] || '',
+      },
+      urgency: i.urgency,
+      description: i.description,
+      status: i.status,
+      date: i.date,
+      anonymous: i.reporter === 'anonymous',
+      reportedBy: i.reporter,
+    }));
+
+    res.status(200).json({ msg: '✅ All reports fetched', data: formatted });
+  } catch (err) {
+    console.error('❌ Error fetching reports:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 };
