@@ -128,3 +128,58 @@ export const getAllReports = async (req, res) => {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 };
+
+// 📍 Get Simplified Map Data
+export const getMapData = async (req, res) => {
+  try {
+    const incidents = await Incident.find({}, 'incidentType location status urgency');
+    const mapData = incidents.map(i => ({
+      id: i._id,
+      type: i.incidentType,
+      status: i.status,
+      urgency: i.urgency,
+      lat: i.location?.coordinates?.[1] || null,
+      lng: i.location?.coordinates?.[0] || null,
+    }));
+
+    res.status(200).json({ msg: '✅ Map data fetched', data: mapData });
+  } catch (err) {
+    console.error('❌ Error fetching map data:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+};
+
+// ✅ Update Incident Status
+export const updateIncidentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ msg: '❌ Status is required' });
+    }
+
+    const incident = await Incident.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!incident) {
+      return res.status(404).json({ msg: '❌ Incident not found' });
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('incident_status_updated', {
+        id: incident._id,
+        status: incident.status,
+      });
+    }
+
+    res.status(200).json({ msg: '✅ Incident status updated', data: incident });
+  } catch (err) {
+    console.error('❌ Error updating status:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+};
