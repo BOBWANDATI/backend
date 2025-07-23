@@ -7,9 +7,9 @@ import { fileURLToPath } from 'url';
 import {
   createReport,
   getAllReports,
-  getMapData,
+  getMapData,           // <-- make sure this is defined in the controller
   deleteIncident,
-  updateIncidentStatus
+  updateIncidentStatus  // <-- make sure this is defined in the controller
 } from '../controllers/reportController.js';
 
 const router = express.Router();
