@@ -42,10 +42,9 @@ export const createReport = async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      // ✅ Emitting with title (required for alert system in frontend)
       io.emit('new_incident_reported', {
         id: savedReport._id,
-        title: savedReport.incidentType, // <-- this is now included for frontend
+        title: savedReport.incidentType,
         type: savedReport.incidentType,
         status: savedReport.status,
         date: savedReport.date,
@@ -55,7 +54,6 @@ export const createReport = async (req, res) => {
       });
       console.log('📢 new_incident_reported emitted:', savedReport._id);
 
-      // Emit full updated list to admin dashboard
       const allReports = await Incident.find().sort({ createdAt: -1 });
       const formattedReports = allReports.map(i => ({
         _id: i._id,
@@ -78,6 +76,29 @@ export const createReport = async (req, res) => {
     res.status(201).json({ msg: '✅ Report submitted successfully', data: savedReport });
   } catch (err) {
     console.error('❌ Error saving report:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+};
+
+// ❌ Delete Report by ID
+export const deleteIncident = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const incident = await Incident.findByIdAndDelete(id);
+
+    if (!incident) {
+      return res.status(404).json({ msg: '❌ Incident not found' });
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('incident_deleted', { id });
+      console.log('🗑️ incident_deleted emitted:', id);
+    }
+
+    res.status(200).json({ msg: '✅ Incident deleted successfully', id });
+  } catch (err) {
+    console.error('❌ Error deleting incident:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 };
