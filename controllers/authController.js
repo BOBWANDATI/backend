@@ -177,7 +177,25 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Data Management Controllers
+// ✅ Token Verification
+export const verifyToken = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ msg: 'No token provided' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const admin = await Admin.findById(decoded.id).select('-password');
+
+    if (!admin) return res.status(404).json({ msg: 'Admin not found' });
+
+    return res.json({ admin });
+  } catch (err) {
+    console.error('❌ Token verification error:', err.message);
+    return res.status(401).json({ msg: 'Invalid or expired token' });
+  }
+};
+
+// ✅ Data Management
 export const getAllDiscussions = async (req, res) => {
   try {
     const discussions = await Discussion.find().sort({ createdAt: -1 });
@@ -202,10 +220,8 @@ export const updateStoryStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
     const updated = await Story.findByIdAndUpdate(id, { status }, { new: true });
     if (!updated) return res.status(404).json({ msg: 'Story not found' });
-
     res.json(updated);
   } catch (err) {
     console.error('❌ Update story status error:', err);
@@ -227,10 +243,8 @@ export const updateIncidentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
     const incident = await Incident.findByIdAndUpdate(id, { status }, { new: true });
     if (!incident) return res.status(404).json({ msg: 'Incident not found' });
-
     res.json(incident);
   } catch (err) {
     console.error('❌ Update status error:', err);
@@ -244,7 +258,6 @@ export const deleteIncident = async (req, res) => {
     const { id } = req.params;
     const deleted = await Incident.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'Incident not found' });
-
     res.json({ msg: 'Incident deleted' });
   } catch (err) {
     console.error('❌ Delete incident error:', err);
@@ -257,7 +270,6 @@ export const deleteDiscussion = async (req, res) => {
     const { id } = req.params;
     const deleted = await Discussion.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'Discussion not found' });
-
     res.json({ msg: 'Discussion deleted' });
   } catch (err) {
     console.error('❌ Delete discussion error:', err);
@@ -270,7 +282,6 @@ export const deleteStory = async (req, res) => {
     const { id } = req.params;
     const deleted = await Story.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'Story not found' });
-
     res.json({ msg: 'Story deleted' });
   } catch (err) {
     console.error('❌ Delete story error:', err);
@@ -293,14 +304,11 @@ export const updateNewsStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
     if (!['pending', 'verified', 'rejected'].includes(status)) {
       return res.status(400).json({ msg: 'Invalid status' });
     }
-
     const updated = await News.findByIdAndUpdate(id, { status }, { new: true });
     if (!updated) return res.status(404).json({ msg: 'News not found' });
-
     res.json(updated);
   } catch (err) {
     console.error('❌ Update news status error:', err);
@@ -313,7 +321,6 @@ export const deleteNews = async (req, res) => {
     const { id } = req.params;
     const deleted = await News.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'News not found' });
-
     res.json({ msg: 'News deleted' });
   } catch (err) {
     console.error('❌ Delete news error:', err);
