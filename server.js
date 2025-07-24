@@ -64,6 +64,8 @@ app.use('/api/discussions', discussionRoutes);
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/ai/peacebot', peacebotRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/auth', require('./routes/auth'));
+
 app.use('/api/stories', storyRoutes);
 
 
