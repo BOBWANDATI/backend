@@ -7,6 +7,7 @@ import {
   register,
   login,
   approveAdmin,
+  verifyToken,
   getAllDiscussions,
   getAllStories,
   getAllIncidents,
@@ -15,12 +16,10 @@ import {
   getAllNews,
   updateNewsStatus,
   deleteNews,
-  updateStoryStatus,
-  verifyToken
+  updateStoryStatus
 } from '../controllers/authController.js';
 
 import {
-  getAllReports,
   getMapData,
   deleteIncident,
   updateIncidentStatus
@@ -33,9 +32,9 @@ router.get('/approve/:token', approveAdmin);
 router.get('/verify', verifyToken);
 
 /* ========== PUBLIC FRONTEND ROUTES ========== */
-router.get('/incident', getAllIncidents);
 router.get('/discussions', getAllDiscussions);
 router.get('/stories', getAllStories);
+router.get('/report', getAllIncidents); // ✅ unified path for incidents
 
 /* ========== ADMIN DASHBOARD ROUTES ========== */
 router.get('/news', getAllNews);
@@ -96,7 +95,6 @@ router.get('/admin/analytics', async (req, res) => {
 });
 
 /* ========== ADMIN INCIDENT CONTROLS ========== */
-router.get('/report', getAllReports);
 router.get('/admin/report/map', getMapData);
 router.patch('/report/:id/status', updateIncidentStatus);
 router.delete('/report/:id', deleteIncident);
