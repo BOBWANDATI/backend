@@ -208,11 +208,10 @@ export const getAllDiscussions = async (req, res) => {
 
 export const getAllStories = async (req, res) => {
   try {
-    const stories = await Story.find().sort({ createdAt: -1 });
+    const stories = await Story.find().sort({ createdAt: -1 }); // ✅ All stories
     res.json(stories);
   } catch (err) {
-    console.error('❌ Fetch stories error:', err);
-    res.status(500).json({ msg: 'Server error fetching stories.' });
+    res.status(500).json({ error: 'Failed to fetch all stories' });
   }
 };
 
