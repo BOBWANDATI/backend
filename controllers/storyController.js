@@ -4,7 +4,7 @@ import Story from '../models/Story.js';
 export const getVerifiedStories = async (req, res) => {
   try {
     const stories = await Story.find({ status: 'verified' }).sort({ createdAt: -1 });
-    res.json(stories);
+    res.status(200).json({ data: stories });
   } catch (err) {
     res.status(500).json({ message: 'Server error fetching stories' });
   }
@@ -35,7 +35,7 @@ export const submitStory = async (req, res) => {
 export const getAllStoriesAdmin = async (req, res) => {
   try {
     const stories = await Story.find().sort({ createdAt: -1 });
-    res.json(stories);
+    res.status(200).json({ data: stories }); // ✅ Consistent response
   } catch (err) {
     res.status(500).json({ message: 'Server error getting stories' });
   }
@@ -53,7 +53,7 @@ export const updateStoryStatus = async (req, res) => {
   try {
     const updated = await Story.findByIdAndUpdate(id, { status }, { new: true });
     if (!updated) return res.status(404).json({ message: 'Story not found' });
-    res.json({ message: 'Story status updated', story: updated });
+    res.status(200).json({ message: 'Story status updated', story: updated });
   } catch (err) {
     res.status(500).json({ message: 'Error updating story status' });
   }
@@ -65,7 +65,7 @@ export const deleteStory = async (req, res) => {
   try {
     const deleted = await Story.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: 'Story not found' });
-    res.json({ message: 'Story deleted successfully' });
+    res.status(200).json({ message: 'Story deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting story' });
   }
