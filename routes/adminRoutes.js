@@ -15,7 +15,8 @@ import {
   getAllNews,
   updateNewsStatus,
   deleteNews,
-  updateStoryStatus
+  updateStoryStatus,
+  verifyToken
 } from '../controllers/authController.js';
 
 import {
@@ -26,9 +27,10 @@ import {
 } from '../controllers/reportController.js';
 
 /* ========== AUTH ROUTES ========== */
-router.post('/auth/register', register);
-router.post('/auth/login', login);
-router.get('/auth/approve/:token', approveAdmin);
+router.post('/register', register);
+router.post('/login', login);
+router.get('/approve/:token', approveAdmin);
+router.get('/verify', verifyToken);
 
 /* ========== PUBLIC FRONTEND ROUTES ========== */
 router.get('/incident', getAllIncidents);
@@ -36,9 +38,9 @@ router.get('/discussions', getAllDiscussions);
 router.get('/stories', getAllStories);
 
 /* ========== ADMIN DASHBOARD ROUTES ========== */
-router.get('/news', getAllNews);                            // ✅ Get all news
-router.put('/news/:id/status', updateNewsStatus);           // ✅ Verify/Reject news
-router.delete('/news/:id', deleteNews);                     // ✅ Delete news
+router.get('/news', getAllNews);
+router.put('/news/:id/status', updateNewsStatus);
+router.delete('/news/:id', deleteNews);
 
 router.get('/stats', async (req, res) => {
   try {
@@ -102,11 +104,6 @@ router.delete('/report/:id', deleteIncident);
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
 router.delete('/discussions/:id', deleteDiscussion);
 router.delete('/stories/:id', deleteStory);
-// backend/routes/auth.js
-router.get('/verify', authController.verifyToken);
-
-
-// ✅ Optional Story Moderation Routes (if needed)
 router.put('/stories/:id/status', updateStoryStatus);
 
 export default router;
