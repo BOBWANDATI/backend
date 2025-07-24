@@ -102,6 +102,9 @@ router.delete('/report/:id', deleteIncident);
 /* ========== ADMIN DISCUSSION & STORY CONTROLS ========== */
 router.delete('/discussions/:id', deleteDiscussion);
 router.delete('/stories/:id', deleteStory);
+// backend/routes/auth.js
+router.get('/verify', authController.verifyToken);
+
 
 // ✅ Optional Story Moderation Routes (if needed)
 router.put('/stories/:id/status', updateStoryStatus);
