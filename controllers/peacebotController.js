@@ -20,7 +20,7 @@ export const callPeaceBot = async (req, res) => {
     console.error('❌ PeaceBot Error:', error.message || error);
     res.status(500).json({
       text: '⚠️ PeaceBot is currently unavailable.',
-      error: error.message || 'Unknown error'
+      error: error.message || 'Unknown error',
     });
   }
 };
