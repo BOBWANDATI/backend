@@ -5,14 +5,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const handlePeaceBotQuery = async (prompt) => {
+  if (!process.env.COHERE_API_KEY) {
+    throw new Error('COHERE_API_KEY is missing in environment variables');
+  }
+
   try {
     const response = await axios.post(
       'https://api.cohere.ai/v1/chat',
       {
-        model: 'command-r-plus-08-2024', // ✅ Updated model
-        message: prompt,                  // ✅ Still valid for chat endpoint
-        temperature: 0.7,                 // Balance between creative and focused
-        max_tokens: 300,                  // Optional limit for length of response
+        model: 'command-r-plus-08-2024',
+        message: prompt,
+        temperature: 0.7,
+        max_tokens: 300,
       },
       {
         headers: {
@@ -22,16 +26,18 @@ export const handlePeaceBotQuery = async (prompt) => {
       }
     );
 
-    // ✅ Safely extract the text from Cohere's response
-    const aiText =
-      response?.data?.text ||
-      response?.data?.message ||
-      response?.data?.reply ||
-      '🤖 PeaceBot has no answer right now.';
+    const aiText = response?.data?.text;
+
+    if (!aiText || typeof aiText !== 'string') {
+      throw new Error('Cohere returned an empty response');
+    }
 
     return aiText.trim();
-  } catch (err) {
-    console.error('❌ Cohere API error:', err.response?.data || err.message);
-    return '⚠️ PeaceBot is currently offline.';
+  } catch (error) {
+    console.error(
+      '❌ PeaceBot Cohere Error:',
+      error.response?.data || error.message
+    );
+    throw error; // IMPORTANT: let controller handle it
   }
 };
