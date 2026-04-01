@@ -22,25 +22,32 @@ import peacebotRoutes from './routes/peacebot.js';
 import adminRoutes from './routes/adminRoutes.js';
 import storyRoutes from './routes/storyRoutes.js';
 
-// Fix __dirname
+// __dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// App setup
+// App
 const app = express();
 const server = http.createServer(app);
 
 // ENV
 const CLIENT_URL = process.env.CLIENT_URL;
 
-// ✅ CORS (ONLY ONE CONFIG — CLEAN)
-app.use(cors({
-  origin: CLIENT_URL,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// 🔥 CLEAN GLOBAL CORS (IMPORTANT)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", CLIENT_URL);
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -62,13 +69,13 @@ app.use('/api/ai/peacebot', peacebotRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stories', storyRoutes);
 
-// Socket.IO
+// 🔥 SOCKET.IO (FIXED)
 const io = new Server(server, {
   cors: {
     origin: CLIENT_URL,
+    methods: ["GET", "POST"],
     credentials: true
-  },
-  transports: ['websocket']
+  }
 });
 
 app.set('io', io);
@@ -81,7 +88,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Email
+// 🔥 EMAIL
 export const mailTransporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -98,11 +105,13 @@ mailTransporter.verify((error) => {
   }
 });
 
-// ✅ CONNECT DB (DO NOT BLOCK SERVER)
+// 🔥 DATABASE CONNECTION (SAFE)
 import connectDB from './config/db.js';
-connectDB();
+connectDB()
+  .then(() => console.log('🟢 MongoDB connected'))
+  .catch((err) => console.error('🔴 MongoDB error:', err));
 
-// ✅ START SERVER (ALWAYS RUN)
+// 🔥 START SERVER
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
