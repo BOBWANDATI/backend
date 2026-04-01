@@ -4,7 +4,6 @@ dotenv.config();
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -22,32 +21,24 @@ import peacebotRoutes from './routes/peacebot.js';
 import adminRoutes from './routes/adminRoutes.js';
 import storyRoutes from './routes/storyRoutes.js';
 
-// __dirname fix
+// Fix __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// App
+// App setup
 const app = express();
 const server = http.createServer(app);
 
 // ENV
-const CLIENT_URL = process.env.CLIENT_URL;
+const CLIENT_URL = process.env.CLIENT_URL || "*";
 
-// 🔥 CLEAN GLOBAL CORS (IMPORTANT)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", CLIENT_URL);
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+// 🔥 CLEAN CORS (IMPORTANT FOR SOCKET + API)
+app.use(cors({
+  origin: CLIENT_URL,
+  credentials: true
+}));
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-// Body parser
+// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -69,13 +60,14 @@ app.use('/api/ai/peacebot', peacebotRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stories', storyRoutes);
 
-// 🔥 SOCKET.IO (FIXED)
+// 🔥 SOCKET.IO (FIXED - IMPORTANT)
 const io = new Server(server, {
   cors: {
     origin: CLIENT_URL,
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling'] // 🔥 FIX for 400 error
 });
 
 app.set('io', io);
@@ -105,11 +97,24 @@ mailTransporter.verify((error) => {
   }
 });
 
-// 🔥 DATABASE CONNECTION (SAFE)
+// 🔥 DATABASE CONNECTION
 import connectDB from './config/db.js';
+
 connectDB()
   .then(() => console.log('🟢 MongoDB connected'))
-  .catch((err) => console.error('🔴 MongoDB error:', err));
+  .catch((err) => {
+    console.error('🔴 MongoDB error:', err);
+    process.exit(1);
+  });
+
+// 🔥 GLOBAL ERROR HANDLER (IMPORTANT FOR 500 ERRORS)
+app.use((err, req, res, next) => {
+  console.error('❌ SERVER ERROR:', err);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
 
 // 🔥 START SERVER
 const PORT = process.env.PORT || 5000;
