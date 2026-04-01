@@ -32,10 +32,24 @@ import storyRoutes from './routes/storyRoutes.js';
 const app = express();
 const server = http.createServer(app);
 
-// ✅ FRONTEND URL (VERY IMPORTANT)
+// ✅ FRONTEND URL (STRICT - NO FALLBACK *)
 const CLIENT_URL = process.env.CLIENT_URL || "https://amanilinkhub.vercel.app";
 
-// ✅ CORS CONFIG (STRICT + CORRECT)
+// 🔥 HARD CORS FIX (MUST COME FIRST)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", CLIENT_URL);
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// ✅ CORS CONFIG
 const corsOptions = {
   origin: CLIENT_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -45,7 +59,7 @@ const corsOptions = {
 
 // ✅ Middleware (ORDER MATTERS)
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ FIXES PREFLIGHT
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -60,14 +74,14 @@ if (!fs.existsSync(uploadsPath)) {
 app.use('/uploads', express.static(uploadsPath));
 console.log(`📸 Serving static images from: ${uploadsPath}`);
 
-// ✅ SOCKET.IO (FIXED CONFIG)
+// ✅ SOCKET.IO (FIXED)
 const io = new Server(server, {
   cors: {
     origin: CLIENT_URL,
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket', 'polling'] // ✅ IMPORTANT
+  transports: ['websocket'] // 🔥 REMOVED polling (fixes your error)
 });
 
 app.set('io', io);
@@ -93,7 +107,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Email (Gmail)
+// ✅ Email
 export const mailTransporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
