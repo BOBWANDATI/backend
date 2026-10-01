@@ -1,5 +1,25 @@
-```javascript
-import dotenv from 'dotenv';
+ import mongoose from 'mongoose'; 
+ 
+const connectDB = async () => { 
+  const dbURI = process.env.MONGO_URI; 
+ 
+  if (!dbURI) { 
+    console.error('❌ MONGO_URI is not defined in environment variables'); 
+    return; 
+  } 
+ 
+  try { 
+    const conn = await mongoose.connect(dbURI, { 
+      dbName: 'peace_building' 
+    }); 
+ 
+    console.log(`✅ MongoDB connected: ${conn.connection.host}`); 
+  } catch (error) { 
+    console.error('❌ MongoDB connection error:', error.message); 
+  } 
+}; 
+ 
+export default connectDB;  import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -10,9 +30,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
-
-// Database
-import connectDB from './config/db.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -25,201 +42,105 @@ import peacebotRoutes from './routes/peacebot.js';
 import adminRoutes from './routes/adminRoutes.js';
 import storyRoutes from './routes/storyRoutes.js';
 
-// --------------------------------------------------
-// PATH SETUP
-// --------------------------------------------------
-
+// Fix __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --------------------------------------------------
-// APP SETUP
-// --------------------------------------------------
-
+// App setup
 const app = express();
 const server = http.createServer(app);
 
-// --------------------------------------------------
-// ENVIRONMENT VARIABLES
-// --------------------------------------------------
+// ENV
+const CLIENT_URL = process.env.CLIENT_URL || "*";
 
-const PORT = process.env.PORT || 5000;
+// 🔥 CLEAN CORS (IMPORTANT FOR SOCKET + API)
+app.use(cors({
+  origin: CLIENT_URL,
+  credentials: true
+}));
 
-const CLIENT_URL = process.env.CLIENT_URL || '*';
+// Body parsing
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// --------------------------------------------------
-// CORS
-// --------------------------------------------------
-
-app.use(
-  cors({
-    origin: CLIENT_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  })
-);
-
-// --------------------------------------------------
-// BODY PARSING
-// --------------------------------------------------
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// --------------------------------------------------
-// HEALTH CHECK
-// --------------------------------------------------
-
-app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Peace Building API is running',
-    database: 'MongoDB',
-    status: 'online',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Backend is healthy',
-    database: 'MongoDB',
-    status: 'online',
-  });
-});
-
-// --------------------------------------------------
-// UPLOADS
-// --------------------------------------------------
-
+// Uploads
 const uploadsPath = path.join(__dirname, 'uploads');
-
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
-
 app.use('/uploads', express.static(uploadsPath));
 
-// --------------------------------------------------
-// API ROUTES
-// --------------------------------------------------
-
+// Routes
 app.use('/api/auth', authRoutes);
-
 app.use('/api/contact', contactRoutes);
-
 app.use('/api/news', newsRoutes);
-
 app.use('/api/report', reportRoutes);
-
 app.use('/api/discussions', discussionRoutes);
-
 app.use('/api/mpesa', mpesaRoutes);
-
 app.use('/api/ai/peacebot', peacebotRoutes);
-
 app.use('/api/admin', adminRoutes);
-
 app.use('/api/stories', storyRoutes);
 
-// --------------------------------------------------
-// SOCKET.IO
-// --------------------------------------------------
-
+// 🔥 SOCKET.IO (FIXED - IMPORTANT)
 const io = new Server(server, {
   cors: {
     origin: CLIENT_URL,
-    methods: ['GET', 'POST'],
-    credentials: true,
+    methods: ["GET", "POST"],
+    credentials: true
   },
-
-  transports: ['websocket', 'polling'],
+  transports: ['websocket', 'polling'] // 🔥 FIX for 400 error
 });
 
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log(`⚡ Client connected: ${socket.id}`);
+  console.log('⚡ Client connected:', socket.id);
 
-  socket.on('disconnect', (reason) => {
-    console.log(
-      `🚫 Client disconnected: ${socket.id} | Reason: ${reason}`
-    );
+  socket.on('disconnect', () => {
+    console.log('🚫 Client disconnected:', socket.id);
   });
 });
 
-// --------------------------------------------------
-// EMAIL
-// --------------------------------------------------
-
+// 🔥 EMAIL
 export const mailTransporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_SENDER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
+    pass: process.env.EMAIL_PASSWORD
+  }
 });
 
 mailTransporter.verify((error) => {
   if (error) {
-    console.error('❌ Email service error:', error.message);
+    console.error('❌ Email Error:', error);
   } else {
-    console.log('📬 Email service ready');
+    console.log('📬 Email ready');
   }
 });
 
-// --------------------------------------------------
-// 404 HANDLER
-// --------------------------------------------------
+// 🔥 DATABASE CONNECTION
+import connectDB from './config/db.js';
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
+connectDB()
+  .then(() => console.log('🟢 MongoDB connected'))
+  .catch((err) => {
+    console.error('🔴 MongoDB error:', err);
+    process.exit(1);
   });
-});
 
-// --------------------------------------------------
-// GLOBAL ERROR HANDLER
-// --------------------------------------------------
-
+// 🔥 GLOBAL ERROR HANDLER (IMPORTANT FOR 500 ERRORS)
 app.use((err, req, res, next) => {
   console.error('❌ SERVER ERROR:', err);
-
-  res.status(err.status || 500).json({
+  res.status(500).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: err.message || 'Internal Server Error'
   });
 });
 
-// --------------------------------------------------
-// START SERVER AFTER DATABASE CONNECTION
-// --------------------------------------------------
+// 🔥 START SERVER
+const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-  try {
-    await connectDB();
-
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log('==========================================');
-      console.log('🚀 Peace Building API is running');
-      console.log(`📡 Port: ${PORT}`);
-      console.log(`🌍 Client URL: ${CLIENT_URL}`);
-      console.log('🟢 MongoDB: Connected');
-      console.log('🔌 Socket.IO: Enabled');
-      console.log('📧 Email: Enabled');
-      console.log('==========================================');
-    });
-  } catch (error) {
-    console.error('==========================================');
-    console.error('❌ SERVER STARTUP FAILED');
-    console.error(`❌ ${error.message}`);
-    console.error('==========================================');
-
-    process.exit(1);
-  }
-};
-
-startServer();
-```
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 API: https://backend-m6u3.onrender.com`);
+});
